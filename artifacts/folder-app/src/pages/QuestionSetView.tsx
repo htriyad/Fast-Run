@@ -802,17 +802,23 @@ function ExamResults({ questions, examAnswers, onRetry, onBack }: {
             {r.q.type === "mcq" && r.q.options && r.q.options.length > 0 && (
               <div className="ml-10 grid gap-1">
                 {r.q.options.map(opt => {
-                  const isCorrect = r.q.answer && opt.letter.toUpperCase() === r.q.answer.toUpperCase();
-                  const isSelected = r.selected === opt.letter;
+                  const isCorrect = !!(r.q.answer && opt.letter.toUpperCase() === r.q.answer.toUpperCase());
+                  const isSelected = !!(r.selected && r.selected.toUpperCase() === opt.letter.toUpperCase());
+                  const isSkipped = r.unanswered;
+                  // skipped: correct answer shown in ash, not green
+                  const showGreen = isCorrect && !isSkipped;
+                  const showAsh = isCorrect && isSkipped;
+                  const showRed = isSelected && !isCorrect;
                   return (
                     <div key={opt.letter} className="flex items-center gap-2 p-2 rounded-lg text-xs"
                       style={{
-                        background: isCorrect ? "rgba(34,197,94,0.10)" : isSelected ? "rgba(239,68,68,0.10)" : "rgba(255,255,255,0.03)",
-                        border: `1px solid ${isCorrect ? "rgba(34,197,94,0.25)" : isSelected ? "rgba(239,68,68,0.25)" : "rgba(255,255,255,0.06)"}`,
+                        background: showGreen ? "rgba(34,197,94,0.10)" : showAsh ? "rgba(148,163,184,0.07)" : showRed ? "rgba(239,68,68,0.10)" : "rgba(255,255,255,0.03)",
+                        border: `1px solid ${showGreen ? "rgba(34,197,94,0.25)" : showAsh ? "rgba(148,163,184,0.22)" : showRed ? "rgba(239,68,68,0.25)" : "rgba(255,255,255,0.06)"}`,
                       }}>
-                      <span className="font-bold w-4" style={{ color: isCorrect ? "#22c55e" : isSelected ? "#ef4444" : "rgba(255,255,255,0.4)" }}>{opt.letter}</span>
-                      <span className="text-white/60 flex-1"><MathText text={opt.text} imageBlock={false} /></span>
-                      {isCorrect && <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />}
+                      <span className="font-bold w-4" style={{ color: showGreen ? "#22c55e" : showAsh ? "rgba(148,163,184,0.75)" : showRed ? "#ef4444" : "rgba(255,255,255,0.35)" }}>{opt.letter}</span>
+                      <span className="flex-1" style={{ color: showGreen ? "rgba(255,255,255,0.80)" : showAsh ? "rgba(255,255,255,0.45)" : showRed ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.45)" }}><MathText text={opt.text} imageBlock={false} /></span>
+                      {showGreen && <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />}
+                      {showAsh && <span className="text-[10px] text-slate-400/60 flex-shrink-0">ans</span>}
                     </div>
                   );
                 })}
