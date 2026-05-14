@@ -1207,10 +1207,10 @@ export function QuestionSetView() {
               <button
                 onClick={() => setAutoScroll(v => !v)}
                 title={autoScroll ? "Auto-scroll: ON" : "Auto-scroll: OFF"}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-all ${autoScroll ? "bg-amber-500/20 border-amber-500/40 text-amber-300" : "bg-white/5 border-white/10 text-white/30 hover:text-white/50"}`}
+                className={`flex items-center gap-1 rounded-xl text-xs font-semibold border transition-all ${autoScroll ? "px-2.5 py-1.5 bg-amber-500/20 border-amber-500/40 text-amber-300" : "w-10 h-10 justify-center bg-white/5 border-white/10 text-white/30 hover:text-white/50"}`}
               >
-                <Zap className="w-3 h-3" />
-                {autoScroll ? "Auto" : "Manual"}
+                <Zap className="w-3.5 h-3.5" />
+                {autoScroll && <span>Auto</span>}
               </button>
               <button
                 onClick={() => navigatePractice(practiceCurrentIdx + 1)}
