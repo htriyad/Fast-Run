@@ -91,6 +91,7 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
   const [editingPos, setEditingPos] = useState(false);
   const [posInput, setPosInput] = useState("");
   const [showSolution, setShowSolution] = useState(false);
+  const [practiceSolOpen, setPracticeSolOpen] = useState(false);
   const [openParts, setOpenParts] = useState<Record<string, boolean>>({});
 
   const [questionText, setQuestionText] = useState(q.questionText ?? "");
@@ -307,9 +308,10 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
       } else if (isSelected) {
         bg = "rgba(99,102,241,0.15)"; border = "rgba(99,102,241,0.40)"; lBg = "#6366f1"; lColor = "#fff"; tColor = "rgba(255,255,255,0.90)";
       }
+      const locked = examSubmitted || !!examSelected;
       return (
-        <button key={opt.letter} onClick={() => { if (!examSubmitted) onExamSelect?.(opt.letter); }}
-          disabled={examSubmitted}
+        <button key={opt.letter} onClick={() => { if (!locked) onExamSelect?.(opt.letter); }}
+          disabled={locked}
           className="flex items-start gap-2 p-2.5 rounded-xl transition-all text-left w-full active:scale-[0.98]"
           style={{ background: bg, border: `1px solid ${border}` }}>
           <span className="flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold" style={{ background: lBg, color: lColor }}>{opt.letter}</span>
@@ -318,13 +320,13 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
       );
     }
 
-    // Solution mode
+    // Solution mode — only green for the correct answer
     const show = showSol && isCorrect;
     return (
       <div key={opt.letter} className="flex items-start gap-2 p-2.5 rounded-xl transition-colors"
-        style={show ? { background: `${ANSWER_COLORS[opt.letter] ?? "#22c55e"}18`, border: `1px solid ${ANSWER_COLORS[opt.letter] ?? "#22c55e"}40` } : { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+        style={show ? { background: "rgba(34,197,94,0.13)", border: "1px solid rgba(34,197,94,0.40)" } : { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
         <span className="flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold"
-          style={show ? { background: ANSWER_COLORS[opt.letter] ?? "#22c55e", color: "#000" } : { background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)" }}>{opt.letter}</span>
+          style={show ? { background: "#22c55e", color: "#000" } : { background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)" }}>{opt.letter}</span>
         <span className={`text-xs leading-relaxed ${show ? "text-white/95 font-medium" : "text-white/60"}`}><MathText text={opt.text} imageBlock={false} /></span>
       </div>
     );
@@ -437,11 +439,41 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
           </div>
         )}
 
-        {/* MCQ practice solution (revealed) */}
-        {isPractice && q.type === "mcq" && practiceRevealed && practiceSelected && q.solution && (
-          <div className="ml-10 p-3 rounded-xl bg-white/4 border border-white/8">
-            <p className="text-xs font-semibold text-white/35 mb-1">Solution</p>
-            <div className="text-sm text-white/70"><MathText text={q.solution} /></div>
+        {/* MCQ practice solution button (after option selected) */}
+        {isPractice && q.type === "mcq" && practiceRevealed && practiceSelected && (q.solution || q.aiExplanation) && (
+          <div className="ml-10 space-y-2">
+            <button
+              onClick={() => setPracticeSolOpen(v => !v)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border border-white/12 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white/90 active:scale-95"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              Solution
+              {practiceSolOpen ? <ChevronUp className="w-3 h-3 ml-auto" /> : <ChevronDown className="w-3 h-3 ml-auto" />}
+            </button>
+            <AnimatePresence>
+              {practiceSolOpen && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+                  className="overflow-hidden space-y-2"
+                >
+                  {q.solution && (
+                    <div className="p-4 rounded-xl bg-white/5 border border-white/12">
+                      <p className="text-xs font-semibold text-white/40 mb-2">Solution</p>
+                      <div className="text-sm text-white/80 leading-relaxed"><MathText text={q.solution} /></div>
+                    </div>
+                  )}
+                  {q.aiExplanation && (
+                    <div className="p-4 rounded-xl bg-purple-500/8 border border-purple-500/20">
+                      <p className="text-xs font-semibold text-purple-400/60 mb-2">AI Explanation</p>
+                      <div className="text-sm text-white/75 leading-relaxed"><MathText text={q.aiExplanation} /></div>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
 
@@ -604,16 +636,30 @@ function ResultsGrid({
   examAnswers: Record<number, string>; examSubmitted: boolean; mode: "practice" | "exam";
   onClose: () => void; onScrollTo: (idx: number) => void;
 }) {
+  const [gridFilter, setGridFilter] = useState<"all" | "correct" | "wrong" | "skip">("all");
+
   const items = questions.map((q, idx) => {
     const selected = mode === "practice" ? practiceAnswers[q.id] : examAnswers[q.id];
-    const correct = q.answer && selected && selected.toUpperCase() === q.answer.toUpperCase();
-    const wrong = selected && q.answer && selected.toUpperCase() !== q.answer.toUpperCase();
+    const correct = !!(q.answer && selected && selected.toUpperCase() === q.answer.toUpperCase());
+    const wrong = !!(selected && q.answer && selected.toUpperCase() !== q.answer.toUpperCase());
     const unanswered = !selected;
     return { idx, serialNum: idx + 1, correct, wrong, unanswered };
   });
   const totalAnswered = items.filter(i => !i.unanswered).length;
   const totalCorrect = items.filter(i => i.correct).length;
   const totalWrong = items.filter(i => i.wrong).length;
+  const totalSkip = items.filter(i => i.unanswered).length;
+
+  // Before submitted in exam: only show answered vs unanswered (no correct/wrong reveal)
+  const revealColors = mode === "practice" || examSubmitted;
+
+  const filteredItems = examSubmitted
+    ? items.filter(item =>
+        gridFilter === "all" ? true
+        : gridFilter === "correct" ? item.correct
+        : gridFilter === "wrong" ? item.wrong
+        : item.unanswered)
+    : items;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -627,21 +673,49 @@ function ResultsGrid({
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div className="rounded-xl bg-white/5 border border-white/8 p-3 text-center"><div className="text-xl font-bold text-white/80">{totalAnswered}</div><div className="text-xs text-white/30 mt-0.5">Answered</div></div>
-          <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 text-center"><div className="text-xl font-bold text-emerald-400">{totalCorrect}</div><div className="text-xs text-emerald-400/50 mt-0.5">Correct</div></div>
-          <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-3 text-center"><div className="text-xl font-bold text-red-400">{totalWrong}</div><div className="text-xs text-red-400/50 mt-0.5">Wrong</div></div>
+          {revealColors ? <>
+            <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 text-center"><div className="text-xl font-bold text-emerald-400">{totalCorrect}</div><div className="text-xs text-emerald-400/50 mt-0.5">Correct</div></div>
+            <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-3 text-center"><div className="text-xl font-bold text-red-400">{totalWrong}</div><div className="text-xs text-red-400/50 mt-0.5">Wrong</div></div>
+          </> : <>
+            <div className="rounded-xl bg-white/4 border border-white/8 p-3 text-center"><div className="text-xl font-bold text-white/40">{questions.length - totalAnswered}</div><div className="text-xs text-white/20 mt-0.5">Remaining</div></div>
+            <div className="rounded-xl bg-white/4 border border-white/8 p-3 text-center"><div className="text-xl font-bold text-white/40">{questions.length}</div><div className="text-xs text-white/20 mt-0.5">Total</div></div>
+          </>}
         </div>
+
+        {/* Filter tabs — only after exam submitted */}
+        {examSubmitted && mode === "exam" && (
+          <div className="flex gap-1 p-1 rounded-xl bg-white/4 border border-white/8">
+            {([
+              { id: "all" as const, label: `All` },
+              { id: "correct" as const, label: `✓ ${totalCorrect}`, color: "text-emerald-400" },
+              { id: "wrong" as const, label: `✗ ${totalWrong}`, color: "text-red-400" },
+              { id: "skip" as const, label: `— ${totalSkip}`, color: "text-white/40" },
+            ]).map(f => (
+              <button key={f.id} onClick={() => setGridFilter(f.id)}
+                className={`flex-1 py-1 rounded-lg text-xs font-semibold transition-all ${gridFilter === f.id ? "bg-white/12 text-white/90" : `${f.color ?? "text-white/30"} hover:text-white/60`}`}>
+                {f.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="grid grid-cols-6 gap-1.5">
-          {items.map(item => (
-            <button key={item.idx} onClick={() => { onScrollTo(item.idx); onClose(); }}
-              className="h-9 rounded-xl text-xs font-bold transition-all hover:scale-110 active:scale-95"
-              style={{
-                background: item.correct ? "rgba(34,197,94,0.20)" : item.wrong ? "rgba(239,68,68,0.20)" : "rgba(255,255,255,0.06)",
-                border: `1px solid ${item.correct ? "rgba(34,197,94,0.40)" : item.wrong ? "rgba(239,68,68,0.40)" : "rgba(255,255,255,0.10)"}`,
-                color: item.correct ? "#22c55e" : item.wrong ? "#ef4444" : "rgba(255,255,255,0.40)",
-              }}>
-              {item.serialNum}
-            </button>
-          ))}
+          {filteredItems.map(item => {
+            const showCorrect = revealColors && item.correct;
+            const showWrong = revealColors && item.wrong;
+            const showAnswered = !revealColors && !item.unanswered;
+            return (
+              <button key={item.idx} onClick={() => { onScrollTo(item.idx); onClose(); }}
+                className="h-9 rounded-xl text-xs font-bold transition-all hover:scale-110 active:scale-95"
+                style={{
+                  background: showCorrect ? "rgba(34,197,94,0.20)" : showWrong ? "rgba(239,68,68,0.20)" : showAnswered ? "rgba(99,102,241,0.20)" : "rgba(255,255,255,0.06)",
+                  border: `1px solid ${showCorrect ? "rgba(34,197,94,0.40)" : showWrong ? "rgba(239,68,68,0.40)" : showAnswered ? "rgba(99,102,241,0.40)" : "rgba(255,255,255,0.10)"}`,
+                  color: showCorrect ? "#22c55e" : showWrong ? "#ef4444" : showAnswered ? "#818cf8" : "rgba(255,255,255,0.40)",
+                }}>
+                {item.serialNum}
+              </button>
+            );
+          })}
         </div>
       </motion.div>
     </motion.div>
@@ -1060,7 +1134,7 @@ export function QuestionSetView() {
             onReorderToPosition={isSolution ? handleReorderToPosition : undefined}
             mode={isSolution ? "solution" : isPractice ? "practice" : "exam"}
             practiceSelected={isPractice ? (practiceAnswers[q.id] ?? null) : undefined}
-            practiceRevealed={isPractice ? practiceRevealedId === q.id : undefined}
+            practiceRevealed={isPractice ? (practiceAnswers[q.id] != null) : undefined}
             onPracticeSelect={isPractice ? (letter) => handlePracticeSelect(q.id, letter) : undefined}
             examSelected={isExam ? (examAnswers[q.id] ?? null) : undefined}
             examSubmitted={isExam ? examSubmitted : undefined}
