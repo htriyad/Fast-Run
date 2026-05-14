@@ -34,6 +34,15 @@ async function getFolderWithChildCount(id: number) {
   return folder;
 }
 
+async function isDescendantOf(ancestorId: number, targetId: number): Promise<boolean> {
+  const children = await db.select({ id: foldersTable.id }).from(foldersTable).where(eq(foldersTable.parentId, ancestorId));
+  for (const child of children) {
+    if (child.id === targetId) return true;
+    if (await isDescendantOf(child.id, targetId)) return true;
+  }
+  return false;
+}
+
 async function deleteDescendants(id: number): Promise<void> {
   const children = await db
     .select({ id: foldersTable.id })
@@ -52,15 +61,17 @@ router.get("/folders", async (req, res): Promise<void> => {
     return;
   }
 
-  const { parentId, search } = parsed.data;
+  const { parentId, search, flat } = parsed.data;
 
   const rows = await db
     .select(FOLDER_COLS)
     .from(foldersTable)
     .where(
-      parentId != null
-        ? eq(foldersTable.parentId, parentId)
-        : isNull(foldersTable.parentId)
+      flat
+        ? undefined
+        : parentId != null
+          ? eq(foldersTable.parentId, parentId)
+          : isNull(foldersTable.parentId)
     )
     .orderBy(foldersTable.position, foldersTable.createdAt);
 
@@ -174,11 +185,27 @@ router.patch("/folders/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  const updates: Partial<{ name: string; color: string; icon: string; style: string }> = {};
+  const updates: Partial<{ name: string; color: string; icon: string; style: string; parentId: number | null }> = {};
   if (body.data.name !== undefined) updates.name = body.data.name;
   if (body.data.color !== undefined) updates.color = body.data.color;
   if (body.data.icon !== undefined) updates.icon = body.data.icon;
   if (body.data.style !== undefined) updates.style = body.data.style;
+  if ("parentId" in body.data) {
+    const newParentId = body.data.parentId ?? null;
+    // Cycle check: cannot move into itself or a descendant
+    if (newParentId === params.data.id) {
+      res.status(400).json({ error: "Cannot move a folder into itself" });
+      return;
+    }
+    if (newParentId != null) {
+      const isDesc = await isDescendantOf(params.data.id, newParentId);
+      if (isDesc) {
+        res.status(400).json({ error: "Cannot move a folder into its own descendant" });
+        return;
+      }
+    }
+    updates.parentId = newParentId;
+  }
 
   if (Object.keys(updates).length === 0) {
     res.status(400).json({ error: "No fields to update" });

@@ -46,6 +46,12 @@ paths:
           required: false
           schema:
             type: string
+        - name: flat
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: If true, return all folders regardless of parent
       responses:
         "200":
           description: List of folders
@@ -397,6 +403,8 @@ components:
           type: string
         style:
           type: string
+        parentId:
+          type: ["integer", "null"]
 
     FolderReorderInput:
       type: object

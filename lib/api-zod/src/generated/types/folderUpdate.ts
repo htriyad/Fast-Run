@@ -12,4 +12,6 @@ export interface FolderUpdate {
   color?: string;
   icon?: string;
   style?: string;
+  /** @nullable */
+  parentId?: number | null;
 }

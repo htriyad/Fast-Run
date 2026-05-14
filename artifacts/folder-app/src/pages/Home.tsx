@@ -9,6 +9,7 @@ import {
 import { FolderCard } from "@/components/folder/FolderCard";
 import { FolderFormDialog } from "@/components/folder/FolderFormDialog";
 import { DeleteFolderDialog } from "@/components/folder/DeleteFolderDialog";
+import { MoveFolderDialog } from "@/components/folder/MoveFolderDialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Plus, FolderIcon, GripVertical, Check, Layers } from "lucide-react";
@@ -33,6 +34,7 @@ export function Home() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editFolder, setEditFolder] = useState<Folder | null>(null);
   const [deleteFolder, setDeleteFolder] = useState<Folder | null>(null);
+  const [moveFolderTarget, setMoveFolderTarget] = useState<Folder | null>(null);
   const [reorderMode, setReorderMode] = useState(false);
   const [localOrder, setLocalOrder] = useState<Folder[]>([]);
 
@@ -207,6 +209,7 @@ export function Home() {
                 index={idx}
                 onEdit={setEditFolder}
                 onDelete={setDeleteFolder}
+                onMove={setMoveFolderTarget}
                 reorderMode={reorderMode}
                 onMoveUp={() => moveFolder(idx, "up")}
                 onMoveDown={() => moveFolder(idx, "down")}
@@ -224,6 +227,7 @@ export function Home() {
         <DeleteFolderDialog open={true} onOpenChange={(open) => !open && setDeleteFolder(null)}
           folderId={deleteFolder.id} folderName={deleteFolder.name} />
       )}
+      <MoveFolderDialog folder={moveFolderTarget} onClose={() => setMoveFolderTarget(null)} onMoved={() => queryClient.invalidateQueries()} />
     </div>
   );
 }

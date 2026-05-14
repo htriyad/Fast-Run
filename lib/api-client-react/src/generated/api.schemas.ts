@@ -46,6 +46,8 @@ export interface FolderUpdate {
   color?: string;
   icon?: string;
   style?: string;
+  /** @nullable */
+  parentId?: number | null;
 }
 
 export type FolderReorderInputItemsItem = {
@@ -135,6 +137,10 @@ export type ListFoldersParams = {
    */
   parentId?: number | null;
   search?: string;
+  /**
+   * If true, return all folders regardless of parent
+   */
+  flat?: boolean;
 };
 
 export type ReorderFolders200 = {

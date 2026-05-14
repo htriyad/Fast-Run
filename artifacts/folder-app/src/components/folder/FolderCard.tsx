@@ -1,16 +1,20 @@
 import { Folder } from "@workspace/api-client-react";
 import { Link } from "wouter";
-import { motion } from "framer-motion";
-import { Pencil, Trash2, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Pencil, Trash2, ChevronRight, ArrowUp, ArrowDown, Move } from "lucide-react";
 import { getIcon } from "@/lib/folderIcons";
 import { getStyle } from "@/lib/folderStyles";
 import { cn } from "@/lib/utils";
+import { useRef, useState, useCallback } from "react";
+
+const LONG_PRESS_MS = 600;
 
 interface FolderCardProps {
   folder: Folder;
   index: number;
   onEdit: (folder: Folder) => void;
   onDelete: (folder: Folder) => void;
+  onMove?: (folder: Folder) => void;
   reorderMode?: boolean;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
@@ -23,12 +27,32 @@ export function FolderCard({
   index,
   onEdit,
   onDelete,
+  onMove,
   reorderMode = false,
   onMoveUp,
   onMoveDown,
   isFirst,
   isLast,
 }: FolderCardProps) {
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const suppressNextClick = useRef(false);
+  const [pressing, setPressing] = useState(false);
+
+  const startPress = useCallback(() => {
+    if (reorderMode || !onMove) return;
+    setPressing(true);
+    timerRef.current = setTimeout(() => {
+      suppressNextClick.current = true;
+      setPressing(false);
+      if (navigator.vibrate) navigator.vibrate(40);
+      onMove(folder);
+    }, LONG_PRESS_MS);
+  }, [folder, onMove, reorderMode]);
+
+  const cancelPress = useCallback(() => {
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+    setPressing(false);
+  }, []);
   const IconComponent = getIcon(folder.icon);
   const style = getStyle(folder.style ?? "default");
   const isFlat = folder.style === "flat";
@@ -42,12 +66,20 @@ export function FolderCard({
         style.radiusClass,
         "shadow-lg hover:shadow-xl hover:shadow-black/20",
         isFlat ? "flex items-center gap-4 px-5" : "flex flex-col justify-between p-5",
-        reorderMode && "cursor-default pointer-events-none select-none"
+        reorderMode && "cursor-default pointer-events-none select-none",
+        pressing && "scale-[0.97]"
       )}
       style={{
         backgroundColor: `${folder.color}12`,
-        borderColor: `${folder.color}35`,
+        borderColor: pressing ? folder.color : `${folder.color}35`,
+        boxShadow: pressing ? `0 0 0 2px ${folder.color}60` : undefined,
+        transition: "border-color 0.15s, box-shadow 0.15s, transform 0.15s",
       }}
+      onPointerDown={startPress}
+      onPointerUp={cancelPress}
+      onPointerLeave={cancelPress}
+      onPointerCancel={cancelPress}
+      onContextMenu={e => { e.preventDefault(); }}
     >
       {/* Background glow orb */}
       <div
@@ -229,7 +261,26 @@ export function FolderCard({
           </div>
         </div>
       ) : (
-        <Link href={`/folders/${folder.id}`}>{cardContent}</Link>
+        <Link href={`/folders/${folder.id}`}
+          onClick={e => { if (suppressNextClick.current) { suppressNextClick.current = false; e.preventDefault(); } }}>
+          {cardContent}
+          {/* "Hold to move" hint overlay during long-press */}
+          <AnimatePresence>
+            {pressing && (
+              <motion.div
+                key="hold-hint"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 rounded-2xl flex flex-col items-center justify-center gap-1 pointer-events-none"
+                style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(2px)" }}
+              >
+                <Move className="w-5 h-5 text-white/80" />
+                <span className="text-xs font-semibold text-white/70">Hold to move</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </Link>
       )}
     </motion.div>
   );

@@ -12,4 +12,8 @@ export type ListFoldersParams = {
    */
   parentId?: number | null;
   search?: string;
+  /**
+   * If true, return all folders regardless of parent
+   */
+  flat?: boolean;
 };

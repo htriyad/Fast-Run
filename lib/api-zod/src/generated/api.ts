@@ -20,6 +20,10 @@ export const HealthCheckResponse = zod.object({
 export const ListFoldersQueryParams = zod.object({
   parentId: zod.coerce.number().nullish(),
   search: zod.coerce.string().optional(),
+  flat: zod.coerce
+    .boolean()
+    .optional()
+    .describe("If true, return all folders regardless of parent"),
 });
 
 export const ListFoldersResponseItem = zod.object({
@@ -107,6 +111,7 @@ export const UpdateFolderBody = zod.object({
   color: zod.string().optional(),
   icon: zod.string().optional(),
   style: zod.string().optional(),
+  parentId: zod.number().nullish(),
 });
 
 export const UpdateFolderResponse = zod.object({

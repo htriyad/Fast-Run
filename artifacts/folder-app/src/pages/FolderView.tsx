@@ -14,6 +14,7 @@ import {
 import { FolderCard } from "@/components/folder/FolderCard";
 import { FolderFormDialog } from "@/components/folder/FolderFormDialog";
 import { DeleteFolderDialog } from "@/components/folder/DeleteFolderDialog";
+import { MoveFolderDialog } from "@/components/folder/MoveFolderDialog";
 import { DecodeDialog } from "@/components/folder/DecodeDialog";
 import { QuestionSetCard } from "@/components/folder/QuestionSetCard";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ export function FolderView() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editFolder, setEditFolder] = useState<Folder | null>(null);
   const [deleteFolder, setDeleteFolder] = useState<Folder | null>(null);
+  const [moveFolderTarget, setMoveFolderTarget] = useState<Folder | null>(null);
   const [decodeOpen, setDecodeOpen] = useState(false);
 
   // Folder reorder state
@@ -231,7 +233,7 @@ export function FolderView() {
           <AnimatePresence mode="popLayout">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {displayFolders.map((subfolder, idx) => (
-                <FolderCard key={subfolder.id} folder={subfolder} index={idx} onEdit={setEditFolder} onDelete={setDeleteFolder}
+                <FolderCard key={subfolder.id} folder={subfolder} index={idx} onEdit={setEditFolder} onDelete={setDeleteFolder} onMove={setMoveFolderTarget}
                   reorderMode={folderReorderMode} onMoveUp={() => moveFolder(idx, "up")} onMoveDown={() => moveFolder(idx, "down")}
                   isFirst={idx === 0} isLast={idx === displayFolders.length - 1} />
               ))}
@@ -300,6 +302,7 @@ export function FolderView() {
           folderId={deleteFolder.id} folderName={deleteFolder.name} isViewingSelf={deleteFolder.id === folder.id} />
       )}
       <DecodeDialog open={decodeOpen} onOpenChange={setDecodeOpen} folderId={folderId} folderColor={folder.color} />
+      <MoveFolderDialog folder={moveFolderTarget} onClose={() => setMoveFolderTarget(null)} onMoved={() => queryClient.invalidateQueries()} />
     </div>
   );
 }
