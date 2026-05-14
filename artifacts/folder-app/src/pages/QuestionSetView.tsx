@@ -303,8 +303,19 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
       let bg = "rgba(255,255,255,0.04)", border = "rgba(255,255,255,0.06)";
       let lBg = "rgba(255,255,255,0.08)", lColor = "rgba(255,255,255,0.5)", tColor = "rgba(255,255,255,0.6)";
       if (revealed) {
-        if (isCorrect) { bg = "rgba(34,197,94,0.13)"; border = "rgba(34,197,94,0.40)"; lBg = "#22c55e"; lColor = "#000"; tColor = "rgba(255,255,255,0.95)"; }
-        else if (isSelected) { bg = "rgba(239,68,68,0.13)"; border = "rgba(239,68,68,0.40)"; lBg = "#ef4444"; lColor = "#fff"; }
+        const isSkipped = !examSelected;
+        if (isCorrect && isSelected) {
+          // Correctly answered — green
+          bg = "rgba(34,197,94,0.13)"; border = "rgba(34,197,94,0.40)"; lBg = "#22c55e"; lColor = "#000"; tColor = "rgba(255,255,255,0.95)";
+        } else if (isCorrect && !isSkipped) {
+          // Wrong answer picked, show correct in green so user knows
+          bg = "rgba(34,197,94,0.13)"; border = "rgba(34,197,94,0.40)"; lBg = "#22c55e"; lColor = "#000"; tColor = "rgba(255,255,255,0.95)";
+        } else if (isCorrect && isSkipped) {
+          // Skipped — ash/slate to distinguish from correct
+          bg = "rgba(148,163,184,0.10)"; border = "rgba(148,163,184,0.30)"; lBg = "rgba(148,163,184,0.30)"; lColor = "rgba(255,255,255,0.65)"; tColor = "rgba(255,255,255,0.60)";
+        } else if (isSelected) {
+          bg = "rgba(239,68,68,0.13)"; border = "rgba(239,68,68,0.40)"; lBg = "#ef4444"; lColor = "#fff";
+        }
       } else if (isSelected) {
         bg = "rgba(99,102,241,0.15)"; border = "rgba(99,102,241,0.40)"; lBg = "#6366f1"; lColor = "#fff"; tColor = "rgba(255,255,255,0.90)";
       }
