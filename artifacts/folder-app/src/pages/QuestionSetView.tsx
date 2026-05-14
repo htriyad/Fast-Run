@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
 import { useGetQuestionSet, useGetFolderBreadcrumb, Question } from "@workspace/api-client-react";
 import { MathText } from "@/components/folder/MathText";
 import { Button } from "@/components/ui/button";
@@ -431,9 +431,8 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
         )}
 
         {/* MCQ solution (solution mode) */}
-        {q.type === "mcq" && !renderAsNoOptions && showSol && q.answer && (
+        {q.type === "mcq" && !renderAsNoOptions && showSol && (
           <div className="ml-10 space-y-2">
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: `${ANSWER_COLORS[q.answer.toUpperCase()] ?? "#22c55e"}20`, color: ANSWER_COLORS[q.answer.toUpperCase()] ?? "#22c55e" }}>Answer: {q.answer.toUpperCase()}</span>
             {q.solution && <div className="p-3 rounded-xl bg-white/4 border border-white/8"><p className="text-xs font-semibold text-white/35 mb-1">Solution</p><div className="text-sm text-white/70"><MathText text={q.solution} /></div></div>}
             {q.aiExplanation && <div className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/15"><p className="text-xs font-semibold text-purple-400/50 mb-1">AI Explanation</p><div className="text-sm text-white/65"><MathText text={q.aiExplanation} /></div></div>}
           </div>
@@ -682,18 +681,19 @@ function ResultsGrid({
           </>}
         </div>
 
-        {/* Filter tabs — only after exam submitted */}
+        {/* Filter tabs — always visible after exam submitted */}
         {examSubmitted && mode === "exam" && (
           <div className="flex gap-1 p-1 rounded-xl bg-white/4 border border-white/8">
             {([
-              { id: "all" as const, label: `All` },
-              { id: "correct" as const, label: `✓ ${totalCorrect}`, color: "text-emerald-400" },
-              { id: "wrong" as const, label: `✗ ${totalWrong}`, color: "text-red-400" },
-              { id: "skip" as const, label: `— ${totalSkip}`, color: "text-white/40" },
+              { id: "all" as const, label: "All", sub: `${questions.length}`, activeClass: "bg-white/12 text-white/90", inactiveClass: "text-white/40" },
+              { id: "correct" as const, label: "Correct", sub: `${totalCorrect}`, activeClass: "bg-emerald-500/20 text-emerald-300", inactiveClass: "text-emerald-500/50" },
+              { id: "wrong" as const, label: "Wrong", sub: `${totalWrong}`, activeClass: "bg-red-500/20 text-red-300", inactiveClass: "text-red-500/50" },
+              { id: "skip" as const, label: "Skip", sub: `${totalSkip}`, activeClass: "bg-white/10 text-white/70", inactiveClass: "text-white/30" },
             ]).map(f => (
               <button key={f.id} onClick={() => setGridFilter(f.id)}
-                className={`flex-1 py-1 rounded-lg text-xs font-semibold transition-all ${gridFilter === f.id ? "bg-white/12 text-white/90" : `${f.color ?? "text-white/30"} hover:text-white/60`}`}>
-                {f.label}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all flex flex-col items-center gap-0.5 ${gridFilter === f.id ? f.activeClass : f.inactiveClass}`}>
+                <span>{f.label}</span>
+                <span className="text-[10px] opacity-70">{f.sub}</span>
               </button>
             ))}
           </div>
@@ -703,6 +703,7 @@ function ResultsGrid({
           {filteredItems.map(item => {
             const showCorrect = revealColors && item.correct;
             const showWrong = revealColors && item.wrong;
+            const showSkip = revealColors && item.unanswered && examSubmitted;
             const showAnswered = !revealColors && !item.unanswered;
             return (
               <button key={item.idx} onClick={() => { onScrollTo(item.idx); onClose(); }}
@@ -710,7 +711,7 @@ function ResultsGrid({
                 style={{
                   background: showCorrect ? "rgba(34,197,94,0.20)" : showWrong ? "rgba(239,68,68,0.20)" : showAnswered ? "rgba(99,102,241,0.20)" : "rgba(255,255,255,0.06)",
                   border: `1px solid ${showCorrect ? "rgba(34,197,94,0.40)" : showWrong ? "rgba(239,68,68,0.40)" : showAnswered ? "rgba(99,102,241,0.40)" : "rgba(255,255,255,0.10)"}`,
-                  color: showCorrect ? "#22c55e" : showWrong ? "#ef4444" : showAnswered ? "#818cf8" : "rgba(255,255,255,0.40)",
+                  color: showCorrect ? "#22c55e" : showWrong ? "#ef4444" : showAnswered ? "#818cf8" : "rgba(255,255,255,0.35)",
                 }}>
                 {item.serialNum}
               </button>
@@ -839,6 +840,7 @@ export function QuestionSetView() {
   const setId = parseInt(params.id ?? "0", 10);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
 
   const { data, isLoading } = useGetQuestionSet(setId);
   const { data: breadcrumbs = [] } = useGetFolderBreadcrumb(data?.set?.folderId ?? 0);
@@ -856,6 +858,7 @@ export function QuestionSetView() {
   const [practiceRevealedId, setPracticeRevealedId] = useState<number | null>(null);
   const [practiceCurrentIdx, setPracticeCurrentIdx] = useState(0);
   const [showResults, setShowResults] = useState(false);
+  const [autoScroll, setAutoScroll] = useState(false);
 
   // Exam
   const [examAnswers, setExamAnswers] = useState<Record<number, string>>({});
@@ -935,17 +938,19 @@ export function QuestionSetView() {
   const handlePracticeSelect = useCallback((questionId: number, letter: string) => {
     setPracticeAnswers(prev => ({ ...prev, [questionId]: letter }));
     setPracticeRevealedId(questionId);
-    // Auto-advance to next unanswered after a short pause
-    setTimeout(() => {
-      setPracticeCurrentIdx(prev => {
-        const nextIdx = visible.findIndex((q, i) => i > prev && !practiceAnswers[q.id] && q.id !== questionId);
-        const advance = nextIdx !== -1 ? nextIdx : prev + 1 < visible.length ? prev + 1 : prev;
-        cardRefs.current[advance]?.scrollIntoView({ behavior: "smooth", block: "center" });
-        return advance;
-      });
-    }, 900);
+    // Auto-advance only when auto-scroll is on
+    if (autoScroll) {
+      setTimeout(() => {
+        setPracticeCurrentIdx(prev => {
+          const nextIdx = visible.findIndex((q, i) => i > prev && !practiceAnswers[q.id] && q.id !== questionId);
+          const advance = nextIdx !== -1 ? nextIdx : prev + 1 < visible.length ? prev + 1 : prev;
+          cardRefs.current[advance]?.scrollIntoView({ behavior: "smooth", block: "center" });
+          return advance;
+        });
+      }, 900);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, practiceAnswers]);
+  }, [visible, practiceAnswers, autoScroll]);
 
   const { formatted: timerFormatted } = useExamTimer(
     mode === "exam" && examStarted && !examSubmitted ? selectedDuration : null,
@@ -1093,7 +1098,7 @@ export function QuestionSetView() {
       {/* ── Sticky header ── */}
       <div className="fixed top-0 left-0 right-0 z-20 bg-background/95 backdrop-blur-md border-b border-white/8">
         <div className="max-w-3xl mx-auto px-4 py-2.5 flex items-center gap-3">
-          <button onClick={() => setMode(null)} className="w-8 h-8 rounded-xl bg-white/6 hover:bg-white/10 flex items-center justify-center transition-colors flex-shrink-0">
+          <button onClick={() => navigate(`/folders/${data?.set?.folderId ?? ""}`)} className="w-8 h-8 rounded-xl bg-white/6 hover:bg-white/10 flex items-center justify-center transition-colors flex-shrink-0">
             <ChevronLeft className="w-4 h-4 text-white/60" />
           </button>
           <span className="font-semibold text-white/80 flex-1 truncate text-sm">{set.name}</span>
@@ -1197,13 +1202,24 @@ export function QuestionSetView() {
                 </span>
               )}
             </div>
-            <button
-              onClick={() => navigatePractice(practiceCurrentIdx + 1)}
-              disabled={practiceCurrentIdx >= visible.length - 1}
-              className="w-10 h-10 rounded-xl bg-white/6 border border-white/10 flex items-center justify-center transition-all hover:bg-white/12 active:scale-95 disabled:opacity-25 disabled:cursor-not-allowed"
-            >
-              <ChevronRight className="w-5 h-5 text-white/70" />
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Auto-scroll toggle */}
+              <button
+                onClick={() => setAutoScroll(v => !v)}
+                title={autoScroll ? "Auto-scroll: ON" : "Auto-scroll: OFF"}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-all ${autoScroll ? "bg-amber-500/20 border-amber-500/40 text-amber-300" : "bg-white/5 border-white/10 text-white/30 hover:text-white/50"}`}
+              >
+                <Zap className="w-3 h-3" />
+                {autoScroll ? "Auto" : "Manual"}
+              </button>
+              <button
+                onClick={() => navigatePractice(practiceCurrentIdx + 1)}
+                disabled={practiceCurrentIdx >= visible.length - 1}
+                className="w-10 h-10 rounded-xl bg-white/6 border border-white/10 flex items-center justify-center transition-all hover:bg-white/12 active:scale-95 disabled:opacity-25 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="w-5 h-5 text-white/70" />
+              </button>
+            </div>
           </div>
         </div>
       )}
