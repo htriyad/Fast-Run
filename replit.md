@@ -1,10 +1,11 @@
-# [Project name]
+# Chorcha Question Bank Manager
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Organize exam questions from chorcha.net into nested folders. Decode MCQ, CQ, and SQ question sets directly from Chorcha URLs into a searchable, editable question bank with math rendering.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
+- `pnpm --filter @workspace/folder-app run dev` — run the frontend (port 24503)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
@@ -14,6 +15,7 @@ _Replace the heading above with the project's name, and this line with one sente
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
+- Frontend: React 19 + Vite, Tailwind CSS v4, Wouter router, Framer Motion, KaTeX (math rendering), TanStack Query
 - API: Express 5
 - DB: PostgreSQL + Drizzle ORM
 - Validation: Zod (`zod/v4`), `drizzle-zod`
@@ -22,23 +24,42 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `lib/api-spec/openapi.yaml` — OpenAPI spec (source of truth for API contract)
+- `lib/db/src/schema/` — Drizzle ORM schema (`folders.ts`, `questionSets.ts`)
+- `artifacts/api-server/src/routes/` — Express route handlers (`folders.ts`, `questionSets.ts`, `chorcha.ts`)
+- `artifacts/folder-app/src/pages/` — React pages (Home, FolderView, QuestionSetView)
+- `artifacts/folder-app/src/components/folder/` — Folder and question set components
+- `artifacts/folder-app/src/lib/` — folderIcons.ts, folderStyles.ts, utils.ts
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Contract-first API: OpenAPI spec drives codegen for both React Query hooks and Zod validation schemas
+- Dark mode only: forced via `document.documentElement.classList.add("dark")` in ThemeWrapper
+- Chorcha decode engine: `chorcha.ts` (898 lines) — decodes cipher-encoded question data from Chorcha's API, handles MCQ/CQ/SQ types, math auto-detection, HTML sanitization, image absolutization
+- All non-API fetch calls (chorcha decode, question patch/delete) use `import.meta.env.BASE_URL` prefix to work through the Replit proxy
+- DB cascades: deleting a folder deletes all descendant folders + question sets + questions
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Nested folder manager with custom icons, colors, and card styles (default/square/big/flat/wide)
+- Decode Chorcha question bank URLs or single read URLs into question sets
+- Questions support MCQ (multiple choice), CQ (creative/srijonshil with parts), SQ (short question)
+- Math rendering with KaTeX ($...$ and $$...$$ and \(...\) syntax)
+- Browse / Solution / Practice view modes for question sets
+- Drag-to-reorder folders and question sets
+- Inline question editing (text, options, parts, solution, AI explanation)
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Dark mode only application
+- Bengali/English bilingual content (Chorcha is a Bangladeshi exam prep platform)
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Chorcha decode requires a valid session token from chorcha.net (JWT or cookie string)
+- The `chorcha.ts` route uses `req.log` (pino-http) not `console.log`
+- Token is saved to localStorage and auto-filled in the decode dialog
+- Bank imports use batches of 4 concurrent requests to avoid rate limiting
 
 ## Pointers
 
