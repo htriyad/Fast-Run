@@ -13,7 +13,9 @@ import {
   Eye, EyeOff, BookOpen, Pencil, Trash2, X, Save, Plus, ImageIcon,
   Loader2, ChevronDown, ChevronUp, GripVertical, ArrowUp, ArrowDown, Check,
   BookMarked, Zap, Timer, List, RotateCcw, Trophy, ChevronLeft, Hash,
+  Link2, Copy, Square, CheckSquare, Search,
 } from "lucide-react";
+import { useLinkQuestions } from "@workspace/api-client-react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const ANSWER_COLORS: Record<string, string> = { A: "#22c55e", B: "#3b82f6", C: "#f59e0b", D: "#ef4444", E: "#8b5cf6" };
@@ -94,11 +96,16 @@ interface QCardProps {
   examSubmitted?: boolean;
   onExamSelect?: (letter: string) => void;
   cardRef?: (el: HTMLDivElement | null) => void;
+  // multi-select
+  selectMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
 }
 
 function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorderToPosition,
   mode, practiceSelected, practiceRevealed, onPracticeSelect,
-  examSelected, examSubmitted, onExamSelect, cardRef }: QCardProps) {
+  examSelected, examSubmitted, onExamSelect, cardRef,
+  selectMode, selected, onToggleSelect }: QCardProps) {
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -108,6 +115,8 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
   const [showSolution, setShowSolution] = useState(false);
   const [practiceSolOpen, setPracticeSolOpen] = useState(false);
   const [openParts, setOpenParts] = useState<Record<string, boolean>>({});
+  const [hiddenPartsLocal, setHiddenPartsLocal] = useState<string[]>(Array.isArray(q.hiddenParts) ? q.hiddenParts : []);
+  const [savingHiddenParts, setSavingHiddenParts] = useState(false);
 
   const [questionText, setQuestionText] = useState(q.questionText ?? "");
   const [answer, setAnswer] = useState(q.answer ?? "");
@@ -159,16 +168,39 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
   };
 
   const handleDelete = async () => {
-    if (!confirm("Delete this question?")) return;
+    const isLinked = q.linkId != null;
+    if (!confirm(isLinked ? "Remove this question from the set? (Original stays intact.)" : "Delete this question permanently?")) return;
     setDeleting(true);
     try {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/questions/${q.id}`, { method: "DELETE" });
-      if (!res.ok && res.status !== 204) throw new Error("Delete failed");
+      const url = isLinked
+        ? `${import.meta.env.BASE_URL}api/links/${q.linkId}`
+        : `${import.meta.env.BASE_URL}api/questions/${q.id}`;
+      const res = await fetch(url, { method: "DELETE" });
+      if (!res.ok && res.status !== 204) throw new Error("Failed");
       onDeleted(q.id);
     } catch (e) {
-      toast({ title: "Delete failed", variant: "destructive" });
+      toast({ title: isLinked ? "Remove failed" : "Delete failed", variant: "destructive" });
       setDeleting(false);
     }
+  };
+
+  const handleToggleHiddenPart = async (partKey: string) => {
+    if (!q.linkId) return;
+    const next = hiddenPartsLocal.includes(partKey)
+      ? hiddenPartsLocal.filter(k => k !== partKey)
+      : [...hiddenPartsLocal, partKey];
+    setHiddenPartsLocal(next);
+    setSavingHiddenParts(true);
+    try {
+      await fetch(`${import.meta.env.BASE_URL}api/links/${q.linkId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hiddenParts: next }),
+      });
+    } catch {
+      // revert on error
+      setHiddenPartsLocal(hiddenPartsLocal);
+    } finally { setSavingHiddenParts(false); }
   };
 
   const isCq = q.type === "cq";
@@ -377,9 +409,22 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
 
   const qBorderColor = isCq ? "#f59e0b" : isSq ? "#0ea5e9" : "rgba(255,255,255,0.08)";
 
+  const isLinked = q.linkId != null;
+  const effectiveHiddenParts = isLinked ? hiddenPartsLocal : [];
+
   return (
-    <div ref={cardRef} className="rounded-2xl border bg-white/3 overflow-hidden scroll-mt-20"
-      style={{ borderColor: qBorderColor }}>
+    <div ref={cardRef}
+      className={`rounded-2xl border bg-white/3 overflow-hidden scroll-mt-20 relative transition-all ${selectMode ? "cursor-pointer" : ""} ${selected ? "ring-2 ring-indigo-500/70" : ""}`}
+      style={{ borderColor: selected ? "#6366f1" : qBorderColor }}
+      onClick={selectMode ? (e) => { e.stopPropagation(); onToggleSelect?.(); } : undefined}>
+      {/* Select overlay checkbox */}
+      {selectMode && (
+        <div className="absolute top-2 right-2 z-10 pointer-events-none">
+          {selected
+            ? <CheckSquare className="w-5 h-5 text-indigo-400" />
+            : <Square className="w-5 h-5 text-white/30" />}
+        </div>
+      )}
       <div className="p-4 space-y-3">
         {/* Question header row */}
         <div className="flex items-start gap-3">
@@ -410,8 +455,14 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
               </div>
             )}
           </div>
-          {/* Edit button — solution mode only */}
-          {mode === "solution" && (
+          {/* Linked badge */}
+          {isLinked && (
+            <span title="Linked from another set" className="flex-shrink-0 w-6 h-6 rounded-lg flex items-center justify-center text-indigo-400/70 bg-indigo-500/10">
+              <Link2 className="w-3 h-3" />
+            </span>
+          )}
+          {/* Edit button — solution mode only, not for linked questions */}
+          {mode === "solution" && !isLinked && (
             <button onClick={() => setEditing(true)} className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity hover:bg-white/8 text-white/30 hover:text-white/70">
               <Pencil className="w-3.5 h-3.5" />
             </button>
@@ -525,7 +576,26 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
         {/* CQ parts */}
         {isCq && q.parts && q.parts.length > 0 && (
           <div className="ml-10 space-y-2">
-            {q.parts.map((part) => {
+            {/* Linked CQ — part visibility toggles in solution mode */}
+            {isLinked && mode === "solution" && (
+              <div className="flex items-center gap-1.5 flex-wrap pb-1">
+                <span className="text-[10px] text-white/25 mr-0.5">Show parts:</span>
+                {q.parts.map(part => {
+                  const color = CQ_COLORS[part.key] ?? "#6b7280";
+                  const hidden = effectiveHiddenParts.includes(part.key);
+                  return (
+                    <button key={part.key} onClick={() => handleToggleHiddenPart(part.key)}
+                      disabled={savingHiddenParts}
+                      title={hidden ? `Show ${part.label}` : `Hide ${part.label}`}
+                      className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold transition-all ${hidden ? "opacity-35 grayscale" : "opacity-100"}`}
+                      style={{ background: `${color}25`, color }}>
+                      {part.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            {q.parts.filter(p => !effectiveHiddenParts.includes(p.key)).map((part) => {
               const color = CQ_COLORS[part.key] ?? "#6b7280";
               const hasSol = !!(part.solution || part.aiSolution);
               const isOpen = showSol ? true : !!openParts[part.key];
@@ -582,6 +652,102 @@ function AddQuestionDialog({ setId, onAdded, onClose }: { setId: number; onAdded
           <Button size="sm" onClick={handleAdd} disabled={loading} className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-white gap-1.5">
             {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}Add
           </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── CopyToSetDialog ──────────────────────────────────────────────────────────
+type SetSearchResult = { id: number; name: string; folderId: number; folderName: string; totalQuestions: number };
+
+function CopyToSetDialog({ currentSetId, selectedQuestionIds, onClose, onLinked }: {
+  currentSetId: number;
+  selectedQuestionIds: number[];
+  onClose: () => void;
+  onLinked: (count: number) => void;
+}) {
+  const { toast } = useToast();
+  const [search, setSearch] = useState("");
+  const [sets, setSets] = useState<SetSearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const linkMutation = useLinkQuestions();
+
+  useEffect(() => {
+    setLoading(true);
+    const ctrl = new AbortController();
+    fetch(`${import.meta.env.BASE_URL}api/sets/search?q=${encodeURIComponent(search)}`, { signal: ctrl.signal })
+      .then(r => r.json())
+      .then((data: SetSearchResult[]) => { setSets(data); setLoading(false); })
+      .catch(e => { if (e.name !== "AbortError") setLoading(false); });
+    return () => ctrl.abort();
+  }, [search]);
+
+  // Group by folder
+  const grouped = sets.reduce<Record<string, SetSearchResult[]>>((acc, s) => {
+    const key = s.folderName;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(s);
+    return acc;
+  }, {});
+
+  const handlePick = (targetSetId: number) => {
+    linkMutation.mutate(
+      { setId: targetSetId, data: { questionIds: selectedQuestionIds } },
+      {
+        onSuccess: (data) => {
+          toast({ title: `Linked ${(data as { linked: number }).linked} question(s) to set` });
+          onLinked((data as { linked: number }).linked);
+          onClose();
+        },
+        onError: () => toast({ title: "Copy failed", variant: "destructive" }),
+      }
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="relative bg-[#111] border border-white/12 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-sm max-h-[80dvh] flex flex-col" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center gap-3 p-4 border-b border-white/8 flex-shrink-0">
+          <Copy className="w-4 h-4 text-indigo-400" />
+          <h3 className="font-bold text-white/90 flex-1">Copy {selectedQuestionIds.length} question{selectedQuestionIds.length !== 1 ? "s" : ""} to…</h3>
+          <button onClick={onClose} className="text-white/30 hover:text-white/60"><X className="w-4 h-4" /></button>
+        </div>
+        {/* Search */}
+        <div className="p-3 border-b border-white/6 flex-shrink-0">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/6 border border-white/10">
+            <Search className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />
+            <input autoFocus value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Search question sets…"
+              className="bg-transparent text-sm text-white/80 placeholder-white/25 flex-1 outline-none" />
+          </div>
+        </div>
+        {/* List */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-3">
+          {loading && <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-white/25" /></div>}
+          {!loading && Object.keys(grouped).length === 0 && (
+            <p className="text-center text-sm text-white/25 py-6">No question sets found</p>
+          )}
+          {!loading && Object.entries(grouped).map(([folderName, folderSets]) => (
+            <div key={folderName}>
+              <p className="text-[10px] font-bold text-white/25 uppercase tracking-widest px-1 mb-1.5">{folderName}</p>
+              <div className="space-y-1">
+                {folderSets.filter(s => s.id !== currentSetId).map(s => (
+                  <button key={s.id} onClick={() => handlePick(s.id)}
+                    disabled={linkMutation.isPending}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/4 hover:bg-white/8 border border-white/6 hover:border-white/12 transition-all text-left active:scale-[0.98]">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white/85 font-medium truncate">{s.name}</p>
+                      <p className="text-[11px] text-white/30">{s.totalQuestions} questions</p>
+                    </div>
+                    {linkMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin text-white/30 flex-shrink-0" /> : <ChevronRight className="w-4 h-4 text-white/20 flex-shrink-0" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -926,6 +1092,11 @@ export function QuestionSetView() {
   const [localQuestions, setLocalQuestions] = useState<Question[] | null>(null);
   const [addOpen, setAddOpen] = useState(false);
 
+  // Multi-select / copy
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [copyDialogOpen, setCopyDialogOpen] = useState(false);
+
   // Reorder
   const [reorderOrder, setReorderOrder] = useState<Question[]>([]);
   const [savingOrder, setSavingOrder] = useState(false);
@@ -1198,8 +1369,25 @@ export function QuestionSetView() {
               <span className="text-xs text-white/30">{answeredCount}/{visible.length}</span>
             </div>
           )}
-          {/* Solution count */}
-          {isSolution && <span className="text-xs text-white/30 flex-shrink-0">{visible.length} qs</span>}
+          {/* Solution count + select toggle */}
+          {isSolution && !selectMode && (
+            <>
+              <span className="text-xs text-white/30 flex-shrink-0">{visible.length} qs</span>
+              <button onClick={() => setSelectMode(true)}
+                className="flex-shrink-0 flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-400/70 hover:bg-indigo-500/20 hover:text-indigo-400 transition-colors">
+                <Copy className="w-3 h-3" /> Copy
+              </button>
+            </>
+          )}
+          {isSolution && selectMode && (
+            <>
+              <span className="text-xs font-bold text-indigo-400 flex-shrink-0">{selectedIds.size} selected</span>
+              <button onClick={() => { setSelectMode(false); setSelectedIds(new Set()); }}
+                className="flex-shrink-0 text-xs text-white/40 hover:text-white/70 px-2 py-1 rounded-full hover:bg-white/8 transition-colors">
+                Cancel
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -1222,6 +1410,13 @@ export function QuestionSetView() {
             examSubmitted={isExam ? examSubmitted : undefined}
             onExamSelect={isExam ? (letter) => setExamAnswers(prev => ({ ...prev, [q.id]: letter })) : undefined}
             cardRef={(el) => { cardRefs.current[idx] = el; }}
+            selectMode={isSolution ? selectMode : undefined}
+            selected={isSolution ? selectedIds.has(q.id) : undefined}
+            onToggleSelect={isSolution ? () => setSelectedIds(prev => {
+              const next = new Set(prev);
+              if (next.has(q.id)) next.delete(q.id); else next.add(q.id);
+              return next;
+            }) : undefined}
           />
         ))}
         {/* Exam submit */}
@@ -1310,8 +1505,8 @@ export function QuestionSetView() {
         </button>
       )}
 
-      {/* Add question button (solution mode) */}
-      {isSolution && (
+      {/* Add question button (solution mode, not in select mode) */}
+      {isSolution && !selectMode && (
         <div className="fixed bottom-6 right-4 z-30 flex flex-col gap-2">
           <button onClick={() => setAddOpen(true)}
             className="w-12 h-12 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95"
@@ -1319,6 +1514,15 @@ export function QuestionSetView() {
             <Plus className="w-5 h-5 text-white" />
           </button>
         </div>
+      )}
+      {/* Copy button — shows when questions are selected */}
+      {isSolution && selectMode && selectedIds.size > 0 && (
+        <button onClick={() => setCopyDialogOpen(true)}
+          className="fixed bottom-6 right-4 z-30 flex items-center gap-2 px-5 py-3.5 rounded-full shadow-2xl font-bold text-sm transition-all hover:scale-105 active:scale-95"
+          style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 8px 32px rgba(99,102,241,0.45)" }}>
+          <Link2 className="w-4 h-4 text-white" />
+          <span className="text-white">Copy {selectedIds.size} to set</span>
+        </button>
       )}
 
       {/* ── Results / Grid overlays ── */}
@@ -1338,6 +1542,14 @@ export function QuestionSetView() {
       </AnimatePresence>
 
       {addOpen && <AddQuestionDialog setId={setId} onAdded={handleAdded} onClose={() => setAddOpen(false)} />}
+      {copyDialogOpen && (
+        <CopyToSetDialog
+          currentSetId={setId}
+          selectedQuestionIds={[...selectedIds]}
+          onClose={() => setCopyDialogOpen(false)}
+          onLinked={() => { setSelectMode(false); setSelectedIds(new Set()); }}
+        />
+      )}
     </div>
   );
 }

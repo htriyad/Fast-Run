@@ -26,7 +26,11 @@ import type {
   FolderStats,
   FolderUpdate,
   HealthStatus,
+  LinkQuestions200,
+  LinkQuestionsInput,
+  LinkUpdate,
   ListFoldersParams,
+  QuestionLink,
   QuestionSet,
   QuestionSetDetail,
   ReorderFolders200,
@@ -1055,6 +1059,264 @@ export const useDecodeToFolder = <
   TContext
 > => {
   return useMutation(getDecodeToFolderMutationOptions(options));
+};
+
+/**
+ * @summary Link existing questions into another set (zero-copy)
+ */
+export const getLinkQuestionsUrl = (setId: number) => {
+  return `/api/sets/${setId}/link-questions`;
+};
+
+export const linkQuestions = async (
+  setId: number,
+  linkQuestionsInput: LinkQuestionsInput,
+  options?: RequestInit,
+): Promise<LinkQuestions200> => {
+  return customFetch<LinkQuestions200>(getLinkQuestionsUrl(setId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(linkQuestionsInput),
+  });
+};
+
+export const getLinkQuestionsMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof linkQuestions>>,
+    TError,
+    { setId: number; data: BodyType<LinkQuestionsInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof linkQuestions>>,
+  TError,
+  { setId: number; data: BodyType<LinkQuestionsInput> },
+  TContext
+> => {
+  const mutationKey = ["linkQuestions"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof linkQuestions>>,
+    { setId: number; data: BodyType<LinkQuestionsInput> }
+  > = (props) => {
+    const { setId, data } = props ?? {};
+
+    return linkQuestions(setId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LinkQuestionsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof linkQuestions>>
+>;
+export type LinkQuestionsMutationBody = BodyType<LinkQuestionsInput>;
+export type LinkQuestionsMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Link existing questions into another set (zero-copy)
+ */
+export const useLinkQuestions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof linkQuestions>>,
+    TError,
+    { setId: number; data: BodyType<LinkQuestionsInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof linkQuestions>>,
+  TError,
+  { setId: number; data: BodyType<LinkQuestionsInput> },
+  TContext
+> => {
+  return useMutation(getLinkQuestionsMutationOptions(options));
+};
+
+/**
+ * @summary Remove a question link (unlink from set, original question untouched)
+ */
+export const getDeleteQuestionLinkUrl = (id: number) => {
+  return `/api/links/${id}`;
+};
+
+export const deleteQuestionLink = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteQuestionLinkUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteQuestionLinkMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteQuestionLink>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteQuestionLink>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteQuestionLink"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteQuestionLink>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteQuestionLink(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteQuestionLinkMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteQuestionLink>>
+>;
+
+export type DeleteQuestionLinkMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Remove a question link (unlink from set, original question untouched)
+ */
+export const useDeleteQuestionLink = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteQuestionLink>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteQuestionLink>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteQuestionLinkMutationOptions(options));
+};
+
+/**
+ * @summary Update hidden parts for a linked CQ question
+ */
+export const getUpdateQuestionLinkUrl = (id: number) => {
+  return `/api/links/${id}`;
+};
+
+export const updateQuestionLink = async (
+  id: number,
+  linkUpdate: LinkUpdate,
+  options?: RequestInit,
+): Promise<QuestionLink> => {
+  return customFetch<QuestionLink>(getUpdateQuestionLinkUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(linkUpdate),
+  });
+};
+
+export const getUpdateQuestionLinkMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateQuestionLink>>,
+    TError,
+    { id: number; data: BodyType<LinkUpdate> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateQuestionLink>>,
+  TError,
+  { id: number; data: BodyType<LinkUpdate> },
+  TContext
+> => {
+  const mutationKey = ["updateQuestionLink"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateQuestionLink>>,
+    { id: number; data: BodyType<LinkUpdate> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateQuestionLink(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateQuestionLinkMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateQuestionLink>>
+>;
+export type UpdateQuestionLinkMutationBody = BodyType<LinkUpdate>;
+export type UpdateQuestionLinkMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Update hidden parts for a linked CQ question
+ */
+export const useUpdateQuestionLink = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateQuestionLink>>,
+    TError,
+    { id: number; data: BodyType<LinkUpdate> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateQuestionLink>>,
+  TError,
+  { id: number; data: BodyType<LinkUpdate> },
+  TContext
+> => {
+  return useMutation(getUpdateQuestionLinkMutationOptions(options));
 };
 
 /**

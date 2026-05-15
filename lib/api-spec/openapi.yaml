@@ -291,6 +291,92 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /sets/{setId}/link-questions:
+    post:
+      operationId: linkQuestions
+      tags: [questionSets]
+      summary: Link existing questions into another set (zero-copy)
+      parameters:
+        - name: setId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LinkQuestionsInput"
+      responses:
+        "200":
+          description: Links created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  linked:
+                    type: integer
+                required:
+                  - linked
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /links/{id}:
+    delete:
+      operationId: deleteQuestionLink
+      tags: [questionSets]
+      summary: Remove a question link (unlink from set, original question untouched)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateQuestionLink
+      tags: [questionSets]
+      summary: Update hidden parts for a linked CQ question
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LinkUpdate"
+      responses:
+        "200":
+          description: Updated link
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestionLink"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /folders/{id}/breadcrumb:
     get:
       operationId: getFolderBreadcrumb
@@ -542,6 +628,58 @@ components:
         createdAt:
           type: string
           format: date-time
+        linkId:
+          type: ["integer", "null"]
+          description: Set if this question is linked (not owned) by this set
+        hiddenParts:
+          type: array
+          items:
+            type: string
+          description: CQ part keys hidden in this set (only for linked questions)
+
+    QuestionLink:
+      type: object
+      required:
+        - id
+        - questionId
+        - setId
+        - questionIndex
+        - hiddenParts
+        - createdAt
+      properties:
+        id:
+          type: integer
+        questionId:
+          type: integer
+        setId:
+          type: integer
+        questionIndex:
+          type: integer
+        hiddenParts:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    LinkQuestionsInput:
+      type: object
+      required:
+        - questionIds
+      properties:
+        questionIds:
+          type: array
+          items:
+            type: integer
+
+    LinkUpdate:
+      type: object
+      properties:
+        hiddenParts:
+          type: array
+          items:
+            type: string
 
     QuestionSetDetail:
       type: object

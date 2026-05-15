@@ -26,4 +26,11 @@ export interface Question {
   aiExplanation?: string | null;
   hidden: boolean;
   createdAt: Date;
+  /**
+   * Set if this question is linked (not owned) by this set
+   * @nullable
+   */
+  linkId?: number | null;
+  /** CQ part keys hidden in this set (only for linked questions) */
+  hiddenParts?: string[];
 }

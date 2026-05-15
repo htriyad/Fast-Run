@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, boolean, jsonb, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, boolean, jsonb, timestamp, unique } from "drizzle-orm/pg-core";
 import { foldersTable } from "./folders";
 
 export const questionSetsTable = pgTable("question_sets", {
@@ -29,5 +29,15 @@ export const questionsTable = pgTable("questions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const setQuestionLinksTable = pgTable("set_question_links", {
+  id: serial("id").primaryKey(),
+  questionId: integer("question_id").notNull().references(() => questionsTable.id, { onDelete: "cascade" }),
+  setId: integer("set_id").notNull().references(() => questionSetsTable.id, { onDelete: "cascade" }),
+  questionIndex: integer("question_index").notNull().default(0),
+  hiddenParts: text("hidden_parts").array().notNull().default([]),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (t) => [unique("uq_link").on(t.questionId, t.setId)]);
+
 export type QuestionSet = typeof questionSetsTable.$inferSelect;
 export type Question = typeof questionsTable.$inferSelect;
+export type SetQuestionLink = typeof setQuestionLinksTable.$inferSelect;

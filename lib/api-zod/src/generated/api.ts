@@ -199,6 +199,16 @@ export const GetQuestionSetResponse = zod.object({
       aiExplanation: zod.string().nullish(),
       hidden: zod.boolean(),
       createdAt: zod.coerce.date(),
+      linkId: zod
+        .number()
+        .nullish()
+        .describe("Set if this question is linked (not owned) by this set"),
+      hiddenParts: zod
+        .array(zod.string())
+        .optional()
+        .describe(
+          "CQ part keys hidden in this set (only for linked questions)",
+        ),
     }),
   ),
 });
@@ -221,6 +231,48 @@ export const DecodeToFolderBody = zod.object({
     .string()
     .optional()
     .describe("Optional name override for the question set"),
+});
+
+/**
+ * @summary Link existing questions into another set (zero-copy)
+ */
+export const LinkQuestionsParams = zod.object({
+  setId: zod.coerce.number(),
+});
+
+export const LinkQuestionsBody = zod.object({
+  questionIds: zod.array(zod.number()),
+});
+
+export const LinkQuestionsResponse = zod.object({
+  linked: zod.number(),
+});
+
+/**
+ * @summary Remove a question link (unlink from set, original question untouched)
+ */
+export const DeleteQuestionLinkParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Update hidden parts for a linked CQ question
+ */
+export const UpdateQuestionLinkParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateQuestionLinkBody = zod.object({
+  hiddenParts: zod.array(zod.string()).optional(),
+});
+
+export const UpdateQuestionLinkResponse = zod.object({
+  id: zod.number(),
+  questionId: zod.number(),
+  setId: zod.number(),
+  questionIndex: zod.number(),
+  hiddenParts: zod.array(zod.string()),
+  createdAt: zod.coerce.date(),
 });
 
 /**

@@ -110,6 +110,30 @@ export interface Question {
   aiExplanation?: string | null;
   hidden: boolean;
   createdAt: string;
+  /**
+   * Set if this question is linked (not owned) by this set
+   * @nullable
+   */
+  linkId?: number | null;
+  /** CQ part keys hidden in this set (only for linked questions) */
+  hiddenParts?: string[];
+}
+
+export interface QuestionLink {
+  id: number;
+  questionId: number;
+  setId: number;
+  questionIndex: number;
+  hiddenParts: string[];
+  createdAt: string;
+}
+
+export interface LinkQuestionsInput {
+  questionIds: number[];
+}
+
+export interface LinkUpdate {
+  hiddenParts?: string[];
 }
 
 export interface QuestionSetDetail {
@@ -145,4 +169,8 @@ export type ListFoldersParams = {
 
 export type ReorderFolders200 = {
   ok: boolean;
+};
+
+export type LinkQuestions200 = {
+  linked: number;
 };
