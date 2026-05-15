@@ -58,9 +58,16 @@ function tokenize(input: string): Segment[] {
   return segments;
 }
 
+// Module-level cache — each unique expression is rendered once per session
+const _mathCache = new Map<string, string>();
 function renderMath(value: string, display: boolean): string {
+  const key = (display ? "D:" : "I:") + value;
+  const hit = _mathCache.get(key);
+  if (hit !== undefined) return hit;
   try {
-    return katex.renderToString(value, { displayMode: display, throwOnError: false, strict: "ignore", output: "html", trust: false });
+    const html = katex.renderToString(value, { displayMode: display, throwOnError: false, strict: "ignore", output: "html", trust: false });
+    _mathCache.set(key, html);
+    return html;
   } catch {
     return display ? `\\[${value}\\]` : `\\(${value}\\)`;
   }

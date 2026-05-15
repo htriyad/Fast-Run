@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo, memo } from "react";
 import { useParams, Link, useLocation } from "wouter";
 import { useGetQuestionSet, useGetFolderBreadcrumb, Question } from "@workspace/api-client-react";
 import { MathText } from "@/components/folder/MathText";
@@ -633,6 +633,54 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
   );
 }
 
+// ─── Memoised wrapper + lazy viewport mount ────────────────────────────────────
+const QuestionCardMemo = memo(QuestionCard, (prev, next) =>
+  prev.q === next.q &&
+  prev.serialNum === next.serialNum &&
+  prev.totalCount === next.totalCount &&
+  prev.mode === next.mode &&
+  prev.practiceSelected === next.practiceSelected &&
+  prev.practiceRevealed === next.practiceRevealed &&
+  prev.examSelected === next.examSelected &&
+  prev.examSubmitted === next.examSubmitted &&
+  prev.selectMode === next.selectMode &&
+  prev.selected === next.selected
+);
+
+// Cards not yet near the viewport render a thin placeholder — prevents mounting
+// hundreds of KaTeX trees at once. rootMargin="800px" pre-loads ~2 screens ahead.
+function LazyCard(props: QCardProps) {
+  const [mounted, setMounted] = useState(false);
+  const elRef = useRef<HTMLDivElement | null>(null);
+  const obsRef = useRef<IntersectionObserver | null>(null);
+
+  const refCallback = useCallback((el: HTMLDivElement | null) => {
+    elRef.current = el;
+    props.cardRef?.(el);
+    if (!el) { obsRef.current?.disconnect(); return; }
+    if (mounted) return;
+    obsRef.current?.disconnect();
+    obsRef.current = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setMounted(true); obsRef.current?.disconnect(); } },
+      { rootMargin: "800px 0px" }
+    );
+    obsRef.current.observe(el);
+  // cardRef identity changes every render — intentionally excluded
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted]);
+
+  useEffect(() => () => { obsRef.current?.disconnect(); }, []);
+
+  if (!mounted) {
+    const minH = props.q.type === "cq" ? 260 : props.q.type === "sq" ? 96 : 148;
+    return (
+      <div ref={refCallback} className="rounded-2xl border border-white/6 bg-white/2 scroll-mt-20"
+        style={{ minHeight: minH }} />
+    );
+  }
+  return <QuestionCardMemo {...props} />;
+}
+
 // ─── AddQuestionDialog ─────────────────────────────────────────────────────────
 function AddQuestionDialog({ setId, onAdded, onClose }: { setId: number; onAdded: (q: Question) => void; onClose: () => void }) {
   const [type, setType] = useState<"mcq" | "cq" | "sq">("mcq");
@@ -1105,6 +1153,15 @@ export function QuestionSetView() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [copyDialogOpen, setCopyDialogOpen] = useState(false);
 
+  // Stable toggle — never recreated, safe to use with React.memo cards
+  const toggleSelect = useCallback((id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+
   // Reorder
   const [reorderOrder, setReorderOrder] = useState<Question[]>([]);
   const [savingOrder, setSavingOrder] = useState(false);
@@ -1402,7 +1459,7 @@ export function QuestionSetView() {
       {/* ── Question list ── */}
       <div className={`flex-1 max-w-3xl mx-auto w-full px-4 md:px-8 space-y-3 pt-16 ${isPractice ? "pb-40" : "pb-28"}`}>
         {visible.map((q, idx) => (
-          <QuestionCard
+          <LazyCard
             key={q.id}
             q={q}
             serialNum={idx + 1}
@@ -1420,11 +1477,7 @@ export function QuestionSetView() {
             cardRef={(el) => { cardRefs.current[idx] = el; }}
             selectMode={isSolution ? selectMode : undefined}
             selected={isSolution ? selectedIds.has(q.id) : undefined}
-            onToggleSelect={isSolution ? () => setSelectedIds(prev => {
-              const next = new Set(prev);
-              if (next.has(q.id)) next.delete(q.id); else next.add(q.id);
-              return next;
-            }) : undefined}
+            onToggleSelect={isSolution ? () => toggleSelect(q.id) : undefined}
           />
         ))}
         {/* Exam submit */}
