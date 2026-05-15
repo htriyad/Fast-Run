@@ -23,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatePresence, motion } from "framer-motion";
 import { getIcon } from "@/lib/folderIcons";
 import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 export function FolderView() {
   const params = useParams();
@@ -44,28 +45,6 @@ export function FolderView() {
   const [newSetSaving, setNewSetSaving] = useState(false);
   const [, navigate] = useLocation();
 
-  const createNewSet = async () => {
-    if (!newSetName.trim()) return;
-    setNewSetSaving(true);
-    try {
-      const res = await fetch(`${import.meta.env.BASE_URL}api/folders/${folderId}/sets`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newSetName.trim(), examType: newSetType.trim() || null }),
-      });
-      if (res.ok) {
-        const set = await res.json();
-        queryClient.invalidateQueries({ queryKey: getListQuestionSetsQueryKey(folderId) });
-        setNewSetOpen(false);
-        setNewSetName("");
-        setNewSetType("");
-        navigate(`/sets/${set.id}`);
-      }
-    } finally {
-      setNewSetSaving(false);
-    }
-  };
-
   // Folder reorder state
   const [folderReorderMode, setFolderReorderMode] = useState(false);
   const [localFolderOrder, setLocalFolderOrder] = useState<Folder[]>([]);
@@ -77,6 +56,35 @@ export function FolderView() {
 
   const reorderFolders = useReorderFolders();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const createNewSet = async () => {
+    const name = newSetName.trim();
+    if (!name) return;
+    setNewSetSaving(true);
+    try {
+      const res = await fetch(`${import.meta.env.BASE_URL}api/folders/${folderId}/sets`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, examType: newSetType.trim() || null }),
+      });
+      if (res.ok) {
+        const set = await res.json();
+        queryClient.invalidateQueries({ queryKey: getListQuestionSetsQueryKey(folderId) });
+        setNewSetOpen(false);
+        setNewSetName("");
+        setNewSetType("");
+        navigate(`/sets/${set.id}`);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast({ title: "Failed to create set", description: err?.error ?? `Server error ${res.status}`, variant: "destructive" });
+      }
+    } catch (e) {
+      toast({ title: "Failed to create set", description: "Network error — check connection", variant: "destructive" });
+    } finally {
+      setNewSetSaving(false);
+    }
+  };
 
   if (folderLoading || breadcrumbLoading) {
     return (
