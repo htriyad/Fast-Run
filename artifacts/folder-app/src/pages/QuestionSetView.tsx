@@ -23,6 +23,21 @@ type AppMode = null | "solution" | "practice" | "exam" | "reorder";
 type EditablePart = { key: string; label: string; text: string; solution: string | null; aiSolution: string | null };
 type EditableOption = { letter: string; text: string };
 
+// ─── Option stats (localStorage) ──────────────────────────────────────────────
+const STATS_KEY = "chorcha_qstats";
+function readAllStats(): Record<number, Record<string, number>> {
+  try { return JSON.parse(localStorage.getItem(STATS_KEY) ?? "{}"); } catch { return {}; }
+}
+function recordStat(qId: number, letter: string) {
+  const stats = readAllStats();
+  if (!stats[qId]) stats[qId] = {};
+  stats[qId][letter] = (stats[qId][letter] ?? 0) + 1;
+  localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+}
+function getQStats(qId: number): Record<string, number> {
+  return readAllStats()[qId] ?? {};
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const STEM_HOSTS = ["https://chorcha.net", "https://assets.chorcha.net", "https://cdn.chorcha.net", "https://media.chorcha.net"];
 function handleStemImageError(e: { currentTarget: HTMLImageElement }) {
@@ -102,6 +117,19 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
   const [options, setOptions] = useState<EditableOption[]>(Array.isArray(q.options) ? q.options.map(o => ({ ...o })) : []);
   const [parts, setParts] = useState<EditablePart[]>(Array.isArray(q.parts) ? q.parts.map(p => ({ ...p, solution: p.solution ?? null, aiSolution: p.aiSolution ?? null })) : []);
   const [qType, setQType] = useState(q.type ?? "mcq");
+
+  const [qStats, setQStats] = useState<Record<string, number>>(() => getQStats(q.id));
+
+  const handlePracticeOptionSelect = (letter: string) => {
+    recordStat(q.id, letter);
+    setQStats(getQStats(q.id));
+    onPracticeSelect?.(letter);
+  };
+  const handleExamOptionSelect = (letter: string) => {
+    recordStat(q.id, letter);
+    setQStats(getQStats(q.id));
+    onExamSelect?.(letter);
+  };
 
   const resetEdit = () => {
     setQuestionText(q.questionText ?? ""); setAnswer(q.answer ?? ""); setSolution(q.solution ?? "");
@@ -287,7 +315,7 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
         bg = "rgba(255,255,255,0.09)"; border = "rgba(255,255,255,0.22)"; lBg = "rgba(255,255,255,0.22)"; lColor = "rgba(255,255,255,0.9)"; tColor = "rgba(255,255,255,0.80)";
       }
       return (
-        <button key={opt.letter} onClick={() => { if (!practiceSelected) onPracticeSelect?.(opt.letter); }}
+        <button key={opt.letter} onClick={() => { if (!practiceSelected) handlePracticeOptionSelect(opt.letter); }}
           disabled={!!practiceSelected}
           className="flex items-start gap-2 p-2.5 rounded-xl transition-all text-left w-full active:scale-[0.98]"
           style={{ background: bg, border: `1px solid ${border}` }}>
@@ -321,7 +349,7 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
       }
       const locked = examSubmitted || !!examSelected;
       return (
-        <button key={opt.letter} onClick={() => { if (!locked) onExamSelect?.(opt.letter); }}
+        <button key={opt.letter} onClick={() => { if (!locked) handleExamOptionSelect(opt.letter); }}
           disabled={locked}
           className="flex items-start gap-2 p-2.5 rounded-xl transition-all text-left w-full active:scale-[0.98]"
           style={{ background: bg, border: `1px solid ${border}` }}>
@@ -396,6 +424,32 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
             {q.options.map(opt => renderMCQOption(opt))}
           </div>
         )}
+        {/* Option percentage pills — shown after reveal */}
+        {q.type === "mcq" && !renderAsNoOptions && q.options && q.options.length > 0 && effectiveRevealed && (() => {
+          const total = Object.values(qStats).reduce((a, b) => a + b, 0);
+          return total > 0 ? (
+            <div className="ml-10 flex flex-wrap gap-1.5 pt-0.5">
+              {q.options.map(opt => {
+                const count = qStats[opt.letter] ?? 0;
+                const pct = Math.round((count / total) * 100);
+                const isCorrect = !!q.answer && opt.letter.toUpperCase() === q.answer.toUpperCase();
+                return (
+                  <div key={opt.letter} className="flex items-center gap-1 px-2 py-1 rounded-lg"
+                    style={{
+                      background: isCorrect ? "rgba(34,197,94,0.12)" : "rgba(255,255,255,0.05)",
+                      border: `1px solid ${isCorrect ? "rgba(34,197,94,0.25)" : "rgba(255,255,255,0.08)"}`,
+                    }}>
+                    <span className="w-4 h-4 rounded-[5px] flex items-center justify-center text-[10px] font-bold"
+                      style={{ background: isCorrect ? "#22c55e" : "rgba(255,255,255,0.12)", color: isCorrect ? "#000" : "rgba(255,255,255,0.6)" }}>
+                      {opt.letter}
+                    </span>
+                    <span className="text-[11px] font-semibold" style={{ color: isCorrect ? "#4ade80" : "rgba(255,255,255,0.45)" }}>{pct}%</span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null;
+        })()}
 
         {/* Practice hint */}
         {isPractice && q.type === "mcq" && !renderAsNoOptions && !practiceSelected && (
@@ -497,11 +551,11 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
               return (
                 <div key={part.key} className="rounded-xl border border-white/8 bg-white/2 overflow-hidden">
                   <div className="p-3 space-y-2">
-                    <div className="flex items-start gap-2" onClick={hasSol && mode === "solution" ? () => setOpenParts(p => ({ ...p, [part.key]: !p[part.key] })) : undefined}
-                      style={{ cursor: hasSol && mode === "solution" ? "pointer" : "default" }}>
+                    <div className="flex items-start gap-2" onClick={hasSol && (mode === "solution" || mode === "practice") ? () => setOpenParts(p => ({ ...p, [part.key]: !p[part.key] })) : undefined}
+                      style={{ cursor: hasSol && (mode === "solution" || mode === "practice") ? "pointer" : "default" }}>
                       <span className="w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5" style={{ background: `${color}25`, color }}>{part.label}</span>
                       <div className="text-sm text-white/80 leading-relaxed flex-1"><MathText text={part.text} /></div>
-                      {hasSol && mode === "solution" && <span className="text-white/20 self-center flex-shrink-0">{isOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}</span>}
+                      {hasSol && (mode === "solution" || mode === "practice") && <span className="text-white/20 self-center flex-shrink-0">{isOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}</span>}
                     </div>
                     {isOpen && hasSol && (
                       <div className="ml-8 space-y-2">
@@ -794,9 +848,9 @@ function ExamResults({ questions, examAnswers, onRetry, onBack }: {
       {/* Question results list */}
       <div className="space-y-3">
         {filtered.map(r => (
-          <div key={r.q.id} className={`rounded-2xl border p-4 space-y-2 ${r.correct ? "border-emerald-500/25 bg-emerald-500/5" : r.wrong ? "border-red-500/25 bg-red-500/5" : "border-white/8 bg-white/3"}`}>
+          <div key={r.q.id} className={`rounded-2xl border p-4 space-y-2 ${r.correct ? "border-emerald-500/25 bg-emerald-500/5" : r.wrong ? "border-red-500/25 bg-red-500/5" : "border-slate-500/25 bg-slate-500/5"}`}>
             <div className="flex items-start gap-3">
-              <span className={`flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${r.correct ? "bg-emerald-500/20 text-emerald-400" : r.wrong ? "bg-red-500/20 text-red-400" : "bg-white/8 text-white/40"}`}>{r.serialNum}</span>
+              <span className={`flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${r.correct ? "bg-emerald-500/20 text-emerald-400" : r.wrong ? "bg-red-500/20 text-red-400" : "bg-slate-500/20 text-slate-400"}`}>{r.serialNum}</span>
               <div className="flex-1 text-sm text-white/80 leading-relaxed"><MathText text={r.q.questionText ?? ""} /></div>
             </div>
             {r.q.type === "mcq" && r.q.options && r.q.options.length > 0 && (
@@ -819,6 +873,31 @@ function ExamResults({ questions, examAnswers, onRetry, onBack }: {
                       <span className="flex-1" style={{ color: showGreen ? "rgba(255,255,255,0.80)" : showAsh ? "rgba(255,255,255,0.45)" : showRed ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.45)" }}><MathText text={opt.text} imageBlock={false} /></span>
                       {showGreen && <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />}
                       {showAsh && <span className="text-[10px] text-slate-400/60 flex-shrink-0">ans</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {/* CQ parts in exam result */}
+            {r.q.type === "cq" && r.q.parts && r.q.parts.length > 0 && (
+              <div className="ml-10 space-y-2">
+                {r.q.parts.map(part => {
+                  const color = CQ_COLORS[part.key] ?? "#6b7280";
+                  const hasSol = !!(part.solution || part.aiSolution);
+                  return (
+                    <div key={part.key} className="rounded-xl border border-white/8 bg-white/2 overflow-hidden">
+                      <div className="p-3 space-y-2">
+                        <div className="flex items-start gap-2">
+                          <span className="w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5" style={{ background: `${color}25`, color }}>{CQ_LABELS[part.key] ?? part.key}</span>
+                          <div className="text-sm text-white/80 leading-relaxed flex-1"><MathText text={part.text} /></div>
+                        </div>
+                        {hasSol && (
+                          <div className="ml-8 space-y-2">
+                            {part.solution && <div className="p-3 rounded-xl" style={{ background: `${color}08`, border: `1px solid ${color}20` }}><p className="text-xs font-semibold mb-1" style={{ color: `${color}70` }}>Solution</p><div className="text-sm text-white/70"><MathText text={part.solution} /></div></div>}
+                            {part.aiSolution && <div className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/15"><p className="text-xs font-semibold text-purple-400/50 mb-1">AI Solution</p><div className="text-sm text-white/65"><MathText text={part.aiSolution} /></div></div>}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
