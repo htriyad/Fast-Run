@@ -424,8 +424,8 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
             {q.options.map(opt => renderMCQOption(opt))}
           </div>
         )}
-        {/* Option percentage pills — shown after reveal */}
-        {q.type === "mcq" && !renderAsNoOptions && q.options && q.options.length > 0 && effectiveRevealed && (() => {
+        {/* Option percentage pills — always shown when data exists */}
+        {q.type === "mcq" && !renderAsNoOptions && q.options && q.options.length > 0 && (() => {
           const total = Object.values(qStats).reduce((a, b) => a + b, 0);
           return total > 0 ? (
             <div className="ml-10 flex flex-wrap gap-1.5 pt-0.5">
