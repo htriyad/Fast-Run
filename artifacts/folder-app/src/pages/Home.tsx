@@ -10,9 +10,10 @@ import { FolderCard } from "@/components/folder/FolderCard";
 import { FolderFormDialog } from "@/components/folder/FolderFormDialog";
 import { DeleteFolderDialog } from "@/components/folder/DeleteFolderDialog";
 import { MoveFolderDialog } from "@/components/folder/MoveFolderDialog";
+import { QuestionIdSearch } from "@/components/QuestionIdSearch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, FolderIcon, GripVertical, Check, Layers } from "lucide-react";
+import { Search, Plus, FolderIcon, GripVertical, Check, Layers, Hash } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -37,6 +38,7 @@ export function Home() {
   const [moveFolderTarget, setMoveFolderTarget] = useState<Folder | null>(null);
   const [reorderMode, setReorderMode] = useState(false);
   const [localOrder, setLocalOrder] = useState<Folder[]>([]);
+  const [idSearchOpen, setIdSearchOpen] = useState(false);
 
   const { data: folders = [], isLoading } = useListFolders({ search: search || undefined });
   const { data: stats } = useGetFolderStats();
@@ -135,15 +137,25 @@ export function Home() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-            className="relative"
+            className="flex items-center gap-2"
           >
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-            <Input
-              placeholder="Search folders..."
-              className="pl-11 h-11 bg-white/4 border-white/8 rounded-2xl focus-visible:ring-1 focus-visible:ring-indigo-500/50 text-white placeholder:text-white/25 transition-all duration-200"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+              <Input
+                placeholder="Search folders..."
+                className="pl-11 h-11 bg-white/4 border-white/8 rounded-2xl focus-visible:ring-1 focus-visible:ring-indigo-500/50 text-white placeholder:text-white/25 transition-all duration-200"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <button
+              onClick={() => setIdSearchOpen(true)}
+              title="Jump to question by ID"
+              className="flex items-center gap-2 h-11 px-4 rounded-2xl border border-white/8 bg-white/4 hover:bg-white/8 hover:border-indigo-500/40 transition-all text-white/40 hover:text-indigo-400 flex-shrink-0 text-sm font-medium"
+            >
+              <Hash className="w-4 h-4" />
+              <span className="hidden sm:inline">Find by ID</span>
+            </button>
           </motion.div>
         )}
 
@@ -228,6 +240,7 @@ export function Home() {
           folderId={deleteFolder.id} folderName={deleteFolder.name} />
       )}
       <MoveFolderDialog folder={moveFolderTarget} onClose={() => setMoveFolderTarget(null)} onMoved={() => queryClient.invalidateQueries()} />
+      <QuestionIdSearch open={idSearchOpen} onClose={() => setIdSearchOpen(false)} />
     </div>
   );
 }

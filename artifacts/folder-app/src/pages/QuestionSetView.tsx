@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo, memo } from "react";
-import { useParams, Link, useLocation } from "wouter";
+import { useParams, Link, useLocation, useSearch } from "wouter";
 import { useGetQuestionSet, useGetFolderBreadcrumb, Question } from "@workspace/api-client-react";
 import { MathText } from "@/components/folder/MathText";
 import { Button } from "@/components/ui/button";
@@ -100,12 +100,13 @@ interface QCardProps {
   selectMode?: boolean;
   selected?: boolean;
   onToggleSelect?: () => void;
+  isHighlighted?: boolean;
 }
 
 function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorderToPosition,
   mode, practiceSelected, practiceRevealed, onPracticeSelect,
   examSelected, examSubmitted, onExamSelect, cardRef,
-  selectMode, selected, onToggleSelect }: QCardProps) {
+  selectMode, selected, onToggleSelect, isHighlighted }: QCardProps) {
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -423,8 +424,8 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
 
   return (
     <div ref={cardRef}
-      className={`rounded-2xl border bg-white/3 overflow-hidden scroll-mt-20 relative transition-all ${selectMode ? "cursor-pointer" : ""} ${selected ? "ring-2 ring-indigo-500/70" : ""}`}
-      style={{ borderColor: selected ? "#6366f1" : qBorderColor }}
+      className={`rounded-2xl border bg-white/3 overflow-hidden scroll-mt-20 relative transition-all ${selectMode ? "cursor-pointer" : ""} ${selected ? "ring-2 ring-indigo-500/70" : ""} ${isHighlighted ? "ring-2 ring-amber-400/80 shadow-[0_0_24px_4px_rgba(251,191,36,0.18)]" : ""}`}
+      style={{ borderColor: selected ? "#6366f1" : isHighlighted ? "rgba(251,191,36,0.5)" : qBorderColor }}
       onClick={selectMode ? (e) => { e.stopPropagation(); onToggleSelect?.(); } : undefined}>
       {/* Select overlay checkbox */}
       {selectMode && (
@@ -659,7 +660,8 @@ const QuestionCardMemo = memo(QuestionCard, (prev, next) =>
   prev.examSelected === next.examSelected &&
   prev.examSubmitted === next.examSubmitted &&
   prev.selectMode === next.selectMode &&
-  prev.selected === next.selected
+  prev.selected === next.selected &&
+  prev.isHighlighted === next.isHighlighted
 );
 
 // Cards not yet near the viewport render a thin placeholder — prevents mounting
@@ -1172,12 +1174,32 @@ export function QuestionSetView() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const searchStr = useSearch();
+  const highlightId = parseInt(new URLSearchParams(searchStr).get("highlight") ?? "", 10) || null;
 
   const { data, isLoading } = useGetQuestionSet(setId);
   const { data: breadcrumbs = [] } = useGetFolderBreadcrumb(data?.set?.folderId ?? 0);
 
   const [mode, setMode] = useState<AppMode>(null);
+  const [highlightedId, setHighlightedId] = useState<number | null>(null);
   const [localQuestions, setLocalQuestions] = useState<Question[] | null>(null);
+
+  // When a ?highlight=id param is present, auto-enter solution mode and scroll to that question
+  useEffect(() => {
+    if (!highlightId || isLoading || !data) return;
+    setMode("solution");
+    setHighlightedId(highlightId);
+    // Scroll after the cards have rendered
+    const timer = setTimeout(() => {
+      const idx = (data.questions ?? []).findIndex(q => q.id === highlightId);
+      if (idx !== -1) {
+        cardRefs.current[idx]?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      // Clear the highlight ring after 4 seconds
+      setTimeout(() => setHighlightedId(null), 4000);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [highlightId, isLoading, data]);
   const [addOpen, setAddOpen] = useState(false);
 
   // Multi-select / copy
@@ -1594,6 +1616,7 @@ export function QuestionSetView() {
             selectMode={isSolution ? selectMode : undefined}
             selected={isSolution ? selectedIds.has(q.id) : undefined}
             onToggleSelect={isSolution ? () => toggleSelect(q.id) : undefined}
+            isHighlighted={highlightedId === q.id}
           />
         ))}
         {/* Exam submit */}

@@ -11,6 +11,31 @@ router.get("/folders/:id/sets", async (req, res) => {
   return res.json(sets);
 });
 
+router.get("/questions/lookup", async (req, res) => {
+  const id = parseInt(req.query.id as string, 10);
+  if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid question id" });
+
+  // First check if it's an owned question
+  const [owned] = await db
+    .select({
+      id: questionsTable.id,
+      type: questionsTable.type,
+      questionText: questionsTable.questionText,
+      questionIndex: questionsTable.questionIndex,
+      setId: questionSetsTable.id,
+      setName: questionSetsTable.name,
+      folderId: questionSetsTable.folderId,
+    })
+    .from(questionsTable)
+    .innerJoin(questionSetsTable, eq(questionsTable.setId, questionSetsTable.id))
+    .where(eq(questionsTable.id, id))
+    .limit(1);
+
+  if (owned) return res.json(owned);
+
+  return res.status(404).json({ error: "Question not found" });
+});
+
 router.get("/sets/search", async (req, res) => {
   const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
   const sets = await db
