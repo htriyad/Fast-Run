@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
 import {
   useListFolders,
   useGetFolder,
@@ -18,7 +18,7 @@ import { MoveFolderDialog } from "@/components/folder/MoveFolderDialog";
 import { DecodeDialog } from "@/components/folder/DecodeDialog";
 import { QuestionSetCard } from "@/components/folder/QuestionSetCard";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Home as HomeIcon, Plus, FolderIcon, GripVertical, Check, Pencil, Trash2, BookOpen } from "lucide-react";
+import { ChevronRight, Home as HomeIcon, Plus, FolderIcon, GripVertical, Check, Pencil, Trash2, BookOpen, BookMarked, Loader2, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatePresence, motion } from "framer-motion";
 import { getIcon } from "@/lib/folderIcons";
@@ -38,6 +38,33 @@ export function FolderView() {
   const [deleteFolder, setDeleteFolder] = useState<Folder | null>(null);
   const [moveFolderTarget, setMoveFolderTarget] = useState<Folder | null>(null);
   const [decodeOpen, setDecodeOpen] = useState(false);
+  const [newSetOpen, setNewSetOpen] = useState(false);
+  const [newSetName, setNewSetName] = useState("");
+  const [newSetType, setNewSetType] = useState("");
+  const [newSetSaving, setNewSetSaving] = useState(false);
+  const [, navigate] = useLocation();
+
+  const createNewSet = async () => {
+    if (!newSetName.trim()) return;
+    setNewSetSaving(true);
+    try {
+      const res = await fetch(`${import.meta.env.BASE_URL}api/folders/${folderId}/sets`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newSetName.trim(), examType: newSetType.trim() || null }),
+      });
+      if (res.ok) {
+        const set = await res.json();
+        queryClient.invalidateQueries({ queryKey: getListQuestionSetsQueryKey(folderId) });
+        setNewSetOpen(false);
+        setNewSetName("");
+        setNewSetType("");
+        navigate(`/sets/${set.id}`);
+      }
+    } finally {
+      setNewSetSaving(false);
+    }
+  };
 
   // Folder reorder state
   const [folderReorderMode, setFolderReorderMode] = useState(false);
@@ -198,6 +225,9 @@ export function FolderView() {
               <Button variant="outline" size="sm" onClick={() => setDecodeOpen(true)} className="border-white/10 text-white/50 hover:text-white gap-1.5">
                 <BookOpen className="w-3.5 h-3.5" /> Decode
               </Button>
+              <Button variant="outline" onClick={() => setNewSetOpen(true)} className="gap-2 rounded-full font-semibold border-white/10 text-white/60 hover:text-white">
+                <BookMarked className="w-4 h-4" /> New Set
+              </Button>
               <Button onClick={() => setCreateOpen(true)} className="gap-2 rounded-full font-semibold"
                 style={{ background: `linear-gradient(135deg, ${folder.color}, ${folder.color}aa)` }}>
                 <Plus className="w-4 h-4" /> Add Subfolder
@@ -293,6 +323,64 @@ export function FolderView() {
           </div>
         </motion.div>
       )}
+
+      {/* New Set Dialog */}
+      <AnimatePresence>
+        {newSetOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)" }}
+            onClick={(e) => { if (e.target === e.currentTarget) { setNewSetOpen(false); setNewSetName(""); setNewSetType(""); } }}>
+            <motion.div initial={{ scale: 0.95, y: 12 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 12 }}
+              className="w-full max-w-sm rounded-3xl border border-white/10 p-6 space-y-5"
+              style={{ background: "linear-gradient(145deg, #1a1a2e, #16162a)", boxShadow: "0 24px 80px rgba(0,0,0,0.6)" }}>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-white/90">New Question Set</h2>
+                <button onClick={() => { setNewSetOpen(false); setNewSetName(""); setNewSetType(""); }}
+                  className="w-7 h-7 rounded-lg bg-white/6 hover:bg-white/12 flex items-center justify-center text-white/40 hover:text-white/70 transition-all">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-white/40 uppercase tracking-widest mb-1.5">Set Name *</label>
+                  <input
+                    autoFocus
+                    value={newSetName}
+                    onChange={e => setNewSetName(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && createNewSet()}
+                    placeholder="e.g. Dhaka Board 2025"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/25 outline-none focus:border-white/25 focus:bg-white/8 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-white/40 uppercase tracking-widest mb-1.5">Type <span className="normal-case font-normal text-white/25">(optional)</span></label>
+                  <input
+                    value={newSetType}
+                    onChange={e => setNewSetType(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && createNewSet()}
+                    placeholder="e.g. cq, mcq, sq"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/25 outline-none focus:border-white/25 focus:bg-white/8 transition-all"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 pt-1">
+                <Button variant="outline" className="flex-1 border-white/10 text-white/50 hover:text-white rounded-xl"
+                  onClick={() => { setNewSetOpen(false); setNewSetName(""); setNewSetType(""); }}>
+                  Cancel
+                </Button>
+                <Button className="flex-1 gap-2 rounded-xl font-semibold"
+                  style={{ background: `linear-gradient(135deg, ${folder.color}, ${folder.color}aa)` }}
+                  disabled={!newSetName.trim() || newSetSaving}
+                  onClick={createNewSet}>
+                  {newSetSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <BookMarked className="w-4 h-4" />}
+                  Create Set
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Modals */}
       <FolderFormDialog open={createOpen} onOpenChange={setCreateOpen} parentId={folder.id} />

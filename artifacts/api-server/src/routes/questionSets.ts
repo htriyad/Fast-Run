@@ -61,6 +61,16 @@ router.get("/sets/:id", async (req, res) => {
   return res.json({ set, questions });
 });
 
+router.post("/folders/:id/sets", async (req, res) => {
+  const folderId = parseInt(req.params.id, 10);
+  if (!Number.isFinite(folderId)) return res.status(400).json({ error: "Invalid folder id" });
+  const name = typeof req.body?.name === "string" ? req.body.name.trim() : "";
+  if (!name) return res.status(400).json({ error: "Name is required" });
+  const examType = typeof req.body?.examType === "string" ? req.body.examType.trim() || null : null;
+  const [set] = await db.insert(questionSetsTable).values({ folderId, name, examType, totalQuestions: 0 }).returning();
+  return res.status(201).json(set);
+});
+
 router.delete("/sets/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
