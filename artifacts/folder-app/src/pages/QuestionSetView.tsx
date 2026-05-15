@@ -117,6 +117,15 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
   const [openParts, setOpenParts] = useState<Record<string, boolean>>({});
   const [hiddenPartsLocal, setHiddenPartsLocal] = useState<string[]>(Array.isArray(q.hiddenParts) ? q.hiddenParts : []);
   const [savingHiddenParts, setSavingHiddenParts] = useState(false);
+  const [idCopied, setIdCopied] = useState(false);
+
+  const handleCopyId = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(String(q.id)).then(() => {
+      setIdCopied(true);
+      setTimeout(() => setIdCopied(false), 1500);
+    });
+  };
 
   const [questionText, setQuestionText] = useState(q.questionText ?? "");
   const [answer, setAnswer] = useState(q.answer ?? "");
@@ -468,6 +477,14 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
                 </button>
               )}
             </div>
+          )}
+          {/* Copy ID button — always visible in solution mode */}
+          {mode === "solution" && (
+            <button onClick={handleCopyId} title={`Copy question ID: ${q.id}`}
+              className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-white/8"
+              style={idCopied ? { opacity: 1, color: "#22c55e" } : { opacity: 0.35, color: "rgba(255,255,255,0.5)" }}>
+              {idCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            </button>
           )}
           {/* Edit button — solution mode only, not for linked questions */}
           {mode === "solution" && !isLinked && (
