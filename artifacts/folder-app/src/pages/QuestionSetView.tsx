@@ -456,25 +456,6 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
           <p className="ml-10 text-xs text-white/20 italic">tap an option to check your answer</p>
         )}
 
-        {/* Practice MCQ result badge */}
-        {isPractice && practiceRevealed && practiceSelected && q.type === "mcq" && (
-          <div className="ml-10">
-            {practiceSelected.toUpperCase() === (q.answer ?? "").toUpperCase()
-              ? <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">✓ Correct!</span>
-              : <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-red-500/15 text-red-400 border border-red-500/25">✗ Wrong — Answer: {q.answer?.toUpperCase()}</span>}
-          </div>
-        )}
-
-        {/* Exam MCQ result */}
-        {isExam && examSubmitted && q.type === "mcq" && q.answer && (
-          <div className="ml-10">
-            {examSelected?.toUpperCase() === q.answer.toUpperCase()
-              ? <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">✓ Correct</span>
-              : examSelected
-                ? <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-red-500/15 text-red-400 border border-red-500/25">✗ Incorrect — Answer: {q.answer.toUpperCase()}</span>
-                : <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-white/8 text-white/40 border border-white/12">Not answered — Answer: {q.answer.toUpperCase()}</span>}
-          </div>
-        )}
 
         {/* SQ / no-options: show answer */}
         {(isSq || renderAsNoOptions) && (
