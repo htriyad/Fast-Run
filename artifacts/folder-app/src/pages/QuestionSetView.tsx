@@ -21,7 +21,7 @@ import { useLinkQuestions } from "@workspace/api-client-react";
 const ANSWER_COLORS: Record<string, string> = { A: "#22c55e", B: "#3b82f6", C: "#f59e0b", D: "#ef4444", E: "#8b5cf6" };
 const CQ_COLORS: Record<string, string> = { A: "#22c55e", B: "#3b82f6", C: "#f59e0b", D: "#8b5cf6" };
 const CQ_LABELS: Record<string, string> = { A: "ক", B: "খ", C: "গ", D: "ঘ" };
-type AppMode = null | "solution" | "practice" | "exam" | "reorder";
+type AppMode = null | "solution" | "practice" | "exam" | "reorder" | "copy";
 type EditablePart = { key: string; label: string; text: string; solution: string | null; aiSolution: string | null };
 type EditableOption = { letter: string; text: string };
 
@@ -818,12 +818,13 @@ interface ModeSelectorProps {
   onSelectMode: (m: "solution" | "practice" | "exam") => void;
   onReorder: () => void;
   onAddQuestion: () => void;
+  onCopy: () => void;
 }
-function ModeSelector({ set, questionCount, breadcrumbs, onSelectMode, onReorder, onAddQuestion }: ModeSelectorProps) {
+function ModeSelector({ set, questionCount, breadcrumbs, onSelectMode, onReorder, onAddQuestion, onCopy }: ModeSelectorProps) {
   const modes = [
-    { id: "practice" as const, label: "Practice", desc: "Answer questions, reveal one at a time", Icon: Zap, color: "#f59e0b", grad: "from-amber-500/20 to-amber-600/10" },
-    { id: "solution" as const, label: "Solution", desc: "Browse all questions with answers shown", Icon: BookMarked, color: "#22c55e", grad: "from-emerald-500/20 to-emerald-600/10" },
-    { id: "exam" as const, label: "Exam", desc: "Timed exam with score and accuracy", Icon: Timer, color: "#6366f1", grad: "from-indigo-500/20 to-indigo-600/10" },
+    { id: "practice" as const, label: "Practice", desc: "Answer questions, reveal one at a time", Icon: Zap, color: "#f59e0b" },
+    { id: "solution" as const, label: "Solution", desc: "Browse all questions with answers shown", Icon: BookMarked, color: "#22c55e" },
+    { id: "exam" as const, label: "Exam", desc: "Timed exam with score and accuracy", Icon: Timer, color: "#6366f1" },
   ];
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 md:px-8 md:py-10 space-y-6">
@@ -867,14 +868,30 @@ function ModeSelector({ set, questionCount, breadcrumbs, onSelectMode, onReorder
         </div>
       </motion.header>
 
+      {/* Copy to Set — prominent action */}
+      <motion.button
+        initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}
+        onClick={onCopy}
+        className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl border border-indigo-500/35 transition-all active:scale-[0.98] hover:border-indigo-500/60 group"
+        style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.08))" }}>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-indigo-500/20">
+          <Link2 className="w-5 h-5 text-indigo-400" />
+        </div>
+        <div className="flex-1 text-left">
+          <div className="font-bold text-white/90 text-sm">Copy to Another Set</div>
+          <div className="text-xs text-white/40 mt-0.5">Select questions and link them to any set</div>
+        </div>
+        <ChevronRight className="w-5 h-5 text-indigo-400/50 flex-shrink-0 group-hover:text-indigo-400 transition-colors" />
+      </motion.button>
+
       {/* Mode cards */}
       <div className="space-y-3">
-        <p className="text-xs font-semibold text-white/25 uppercase tracking-widest">Choose Mode</p>
+        <p className="text-xs font-semibold text-white/25 uppercase tracking-widest">Study Mode</p>
         <div className="grid gap-3">
           {modes.map((m, idx) => (
             <motion.button key={m.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.07, duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
               onClick={() => onSelectMode(m.id)}
-              className={`relative w-full overflow-hidden rounded-2xl border p-5 text-left transition-all duration-200 hover:shadow-xl hover:shadow-black/20 active:scale-[0.98] group`}
+              className="relative w-full overflow-hidden rounded-2xl border p-5 text-left transition-all duration-200 hover:shadow-xl hover:shadow-black/20 active:scale-[0.98] group"
               style={{ background: `linear-gradient(135deg, ${m.color}18, ${m.color}08)`, borderColor: `${m.color}35` }}>
               <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity duration-500" style={{ background: m.color }} />
               <div className="relative z-10 flex items-center gap-4">
@@ -1314,9 +1331,93 @@ export function QuestionSetView() {
             setExamStarted(false);
             setSelectedDuration(null);
           }}
-          onReorder={enterReorder} onAddQuestion={() => setAddOpen(true)} />
+          onReorder={enterReorder}
+          onAddQuestion={() => setAddOpen(true)}
+          onCopy={() => { setSelectedIds(new Set()); setMode("copy"); }} />
         {addOpen && <AddQuestionDialog setId={setId} onAdded={handleAdded} onClose={() => setAddOpen(false)} />}
       </>
+    );
+  }
+
+  // ── Copy mode ──
+  if (mode === "copy") {
+    const allIds = visible.map(q => q.id);
+    const allSelected = allIds.length > 0 && allIds.every(id => selectedIds.has(id));
+    return (
+      <div className="min-h-[100dvh] flex flex-col">
+        {/* Header */}
+        <div className="fixed top-0 left-0 right-0 z-20 bg-background/95 backdrop-blur-md border-b border-white/8">
+          <div className="max-w-3xl mx-auto px-4 py-2.5 flex items-center gap-3">
+            <button onClick={() => { setMode(null); setSelectedIds(new Set()); }}
+              className="w-8 h-8 rounded-xl bg-white/6 hover:bg-white/10 flex items-center justify-center transition-colors flex-shrink-0">
+              <ChevronLeft className="w-4 h-4 text-white/60" />
+            </button>
+            <span className="font-semibold text-white/80 flex-1 truncate text-sm">
+              {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select questions to copy"}
+            </span>
+            <button
+              onClick={() => {
+                if (allSelected) setSelectedIds(new Set());
+                else setSelectedIds(new Set(allIds));
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all"
+              style={allSelected
+                ? { background: "rgba(99,102,241,0.2)", borderColor: "rgba(99,102,241,0.5)", color: "#a5b4fc" }
+                : { background: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.5)" }}>
+              {allSelected ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
+              {allSelected ? "Deselect All" : "Select All"}
+            </button>
+          </div>
+        </div>
+
+        {/* Question list */}
+        <div className="flex-1 max-w-3xl mx-auto w-full px-4 md:px-8 space-y-2 pt-16 pb-28">
+          {visible.map((q, idx) => {
+            const isSelected = selectedIds.has(q.id);
+            const isCq = q.type === "cq";
+            const isSq = q.type === "sq";
+            return (
+              <button key={q.id}
+                onClick={() => toggleSelect(q.id)}
+                className={`w-full flex items-start gap-3 p-3.5 rounded-2xl border text-left transition-all active:scale-[0.99] ${isSelected ? "border-indigo-500/60 bg-indigo-500/10" : "border-white/8 bg-white/3 hover:bg-white/5"}`}>
+                <div className={`flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold mt-0.5 ${isCq ? "bg-amber-500/15 text-amber-400/80" : isSq ? "bg-sky-500/15 text-sky-400/80" : "bg-white/8 text-white/50"}`}>
+                  {idx + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-white/75 leading-relaxed line-clamp-2">
+                    {q.questionText || <span className="italic text-white/25">No text</span>}
+                  </p>
+                  <p className="text-[11px] text-white/25 mt-1 uppercase font-semibold">{q.type}{q.linkId ? " · linked" : ""}</p>
+                </div>
+                <div className={`flex-shrink-0 w-5 h-5 rounded-md border flex items-center justify-center mt-0.5 transition-all ${isSelected ? "bg-indigo-500 border-indigo-500" : "border-white/20 bg-transparent"}`}>
+                  {isSelected && <Check className="w-3 h-3 text-white" />}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Floating copy button */}
+        {selectedIds.size > 0 && (
+          <div className="fixed bottom-6 left-0 right-0 flex justify-center z-30 px-4">
+            <button onClick={() => setCopyDialogOpen(true)}
+              className="flex items-center gap-2.5 px-6 py-3.5 rounded-full shadow-2xl font-bold text-sm transition-all hover:scale-105 active:scale-95"
+              style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 8px 32px rgba(99,102,241,0.45)" }}>
+              <Link2 className="w-4 h-4 text-white" />
+              <span className="text-white">Copy {selectedIds.size} question{selectedIds.size !== 1 ? "s" : ""} to set</span>
+            </button>
+          </div>
+        )}
+
+        {copyDialogOpen && (
+          <CopyToSetDialog
+            currentSetId={setId}
+            selectedQuestionIds={[...selectedIds]}
+            onClose={() => setCopyDialogOpen(false)}
+            onLinked={() => { setMode(null); setSelectedIds(new Set()); setCopyDialogOpen(false); }}
+          />
+        )}
+      </div>
     );
   }
 
