@@ -455,11 +455,19 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
               </div>
             )}
           </div>
-          {/* Linked badge */}
+          {/* Linked badge + remove button */}
           {isLinked && (
-            <span title="Linked from another set" className="flex-shrink-0 w-6 h-6 rounded-lg flex items-center justify-center text-indigo-400/70 bg-indigo-500/10">
-              <Link2 className="w-3 h-3" />
-            </span>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <span title="Linked from another set" className="w-6 h-6 rounded-lg flex items-center justify-center text-indigo-400/70 bg-indigo-500/10">
+                <Link2 className="w-3 h-3" />
+              </span>
+              {mode === "solution" && (
+                <button onClick={handleDelete} disabled={deleting} title="Remove from this set"
+                  className="w-6 h-6 rounded-lg flex items-center justify-center opacity-30 hover:opacity-100 transition-opacity hover:bg-red-500/15 text-white/30 hover:text-red-400">
+                  {deleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
+                </button>
+              )}
+            </div>
           )}
           {/* Edit button — solution mode only, not for linked questions */}
           {mode === "solution" && !isLinked && (
