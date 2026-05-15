@@ -478,14 +478,12 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
               )}
             </div>
           )}
-          {/* Copy ID button — always visible in solution mode */}
-          {mode === "solution" && (
-            <button onClick={handleCopyId} title={`Copy question ID: ${q.id}`}
-              className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-white/8"
-              style={idCopied ? { opacity: 1, color: "#22c55e" } : { opacity: 0.35, color: "rgba(255,255,255,0.5)" }}>
-              {idCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-            </button>
-          )}
+          {/* Copy ID button — visible in all modes */}
+          <button onClick={handleCopyId} title={`Copy question ID: ${q.id}`}
+            className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-white/8"
+            style={idCopied ? { opacity: 1, color: "#22c55e" } : { opacity: 0.35, color: "rgba(255,255,255,0.5)" }}>
+            {idCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+          </button>
           {/* Edit button — solution mode only, not for linked questions */}
           {mode === "solution" && !isLinked && (
             <button onClick={() => setEditing(true)} className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity hover:bg-white/8 text-white/30 hover:text-white/70">
