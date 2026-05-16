@@ -424,7 +424,7 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
 
   return (
     <div ref={cardRef}
-      className={`rounded-2xl border bg-white/3 overflow-hidden scroll-mt-20 relative transition-all ${selectMode ? "cursor-pointer" : ""} ${selected ? "ring-2 ring-indigo-500/70" : ""} ${isHighlighted ? "ring-2 ring-amber-400/80 shadow-[0_0_24px_4px_rgba(251,191,36,0.18)]" : ""}`}
+      className={`chorcha-question-card rounded-2xl border bg-white/3 overflow-hidden scroll-mt-20 relative transition-all ${selectMode ? "cursor-pointer" : ""} ${selected ? "ring-2 ring-indigo-500/70" : ""} ${isHighlighted ? "ring-2 ring-amber-400/80 shadow-[0_0_24px_4px_rgba(251,191,36,0.18)]" : ""}`}
       style={{ borderColor: selected ? "#6366f1" : isHighlighted ? "rgba(251,191,36,0.5)" : qBorderColor }}
       onClick={selectMode ? (e) => { e.stopPropagation(); onToggleSelect?.(); } : undefined}>
       {/* Select overlay checkbox */}
