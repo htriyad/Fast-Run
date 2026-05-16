@@ -10,41 +10,32 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
-
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
   --color-card-border: hsl(var(--card-border));
-
   --color-popover: hsl(var(--popover));
   --color-popover-foreground: hsl(var(--popover-foreground));
   --color-popover-border: hsl(var(--popover-border));
-
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
   --color-primary-border: var(--primary-border);
-
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
   --color-secondary-border: var(--secondary-border);
-
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
   --color-muted-border: var(--muted-border);
-
   --color-accent: hsl(var(--accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
   --color-accent-border: var(--accent-border);
-
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
   --color-destructive-border: var(--destructive-border);
-
   --color-chart-1: hsl(var(--chart-1));
   --color-chart-2: hsl(var(--chart-2));
   --color-chart-3: hsl(var(--chart-3));
   --color-chart-4: hsl(var(--chart-4));
   --color-chart-5: hsl(var(--chart-5));
-
   --color-sidebar: hsl(var(--sidebar));
   --color-sidebar-foreground: hsl(var(--sidebar-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
@@ -55,11 +46,9 @@
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
   --color-sidebar-accent-border: var(--sidebar-accent-border);
   --color-sidebar-ring: hsl(var(--sidebar-ring));
-
   --font-sans: var(--app-font-sans);
   --font-serif: var(--app-font-serif);
   --font-mono: var(--app-font-mono);
-
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -67,16 +56,15 @@
 }
 
 /* ═══════════════════════════════════════════
-   DARK MODE (default)
+   DARK MODE (default / .dark class)
 ═══════════════════════════════════════════ */
 :root {
   color-scheme: dark;
-  --button-outline: rgba(255,255,255, .10);
-  --badge-outline: rgba(255,255,255, .05);
+  --button-outline: rgba(255,255,255,.10);
+  --badge-outline: rgba(255,255,255,.05);
   --opaque-button-border-intensity: 9;
-  --elevate-1: rgba(255,255,255, .04);
-  --elevate-2: rgba(255,255,255, .09);
-
+  --elevate-1: rgba(255,255,255,.04);
+  --elevate-2: rgba(255,255,255,.09);
   --background: 235 18% 5%;
   --foreground: 0 0% 98%;
   --border: 237 15% 13%;
@@ -125,159 +113,120 @@
 }
 
 /* ═══════════════════════════════════════════
-   LIGHT MODE
+   LIGHT MODE — warm parchment / book theme
 ═══════════════════════════════════════════ */
 html.light {
   color-scheme: light;
-  --button-outline: rgba(0,0,0, .08);
-  --badge-outline: rgba(0,0,0, .04);
-  --opaque-button-border-intensity: 9;
-  --elevate-1: rgba(0,0,0, .03);
-  --elevate-2: rgba(0,0,0, .06);
-
-  --background: 38 28% 93%;
-  --foreground: 220 25% 12%;
-  --border: 36 22% 78%;
-  --card: 38 30% 97%;
-  --card-foreground: 220 25% 12%;
-  --card-border: 36 22% 80%;
-  --sidebar: 38 28% 94%;
-  --sidebar-foreground: 220 25% 12%;
-  --sidebar-border: 36 22% 78%;
-  --sidebar-primary: 252 70% 52%;
+  --background: 36 30% 90%;
+  --foreground: 28 60% 8%;
+  --border: 34 28% 72%;
+  --card: 38 35% 97%;
+  --card-foreground: 28 60% 8%;
+  --card-border: 34 28% 74%;
+  --sidebar: 36 28% 88%;
+  --sidebar-foreground: 28 60% 8%;
+  --sidebar-border: 34 28% 72%;
+  --sidebar-primary: 252 65% 48%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 36 22% 88%;
-  --sidebar-accent-foreground: 220 25% 12%;
-  --sidebar-ring: 36 22% 70%;
-  --popover: 38 30% 98%;
-  --popover-foreground: 220 25% 12%;
-  --popover-border: 36 22% 78%;
-  --primary: 252 70% 52%;
+  --sidebar-accent: 34 28% 82%;
+  --sidebar-accent-foreground: 28 60% 8%;
+  --sidebar-ring: 34 28% 65%;
+  --popover: 38 38% 98%;
+  --popover-foreground: 28 60% 8%;
+  --popover-border: 34 28% 72%;
+  --primary: 252 65% 48%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 36 22% 86%;
-  --secondary-foreground: 220 25% 12%;
-  --muted: 36 22% 86%;
-  --muted-foreground: 220 15% 42%;
-  --accent: 36 22% 82%;
-  --accent-foreground: 220 25% 12%;
-  --destructive: 0 72% 50%;
+  --secondary: 34 28% 82%;
+  --secondary-foreground: 28 60% 8%;
+  --muted: 34 28% 82%;
+  --muted-foreground: 28 30% 38%;
+  --accent: 34 28% 78%;
+  --accent-foreground: 28 60% 8%;
+  --destructive: 0 68% 46%;
   --destructive-foreground: 0 0% 100%;
-  --input: 36 22% 86%;
-  --ring: 36 22% 65%;
-  --chart-1: 252 70% 52%;
-  --chart-2: 320 70% 48%;
-  --chart-3: 160 70% 35%;
-  --chart-4: 38 80% 42%;
-  --chart-5: 200 70% 42%;
+  --input: 34 28% 82%;
+  --ring: 34 28% 60%;
+  --chart-1: 252 65% 48%;
+  --chart-2: 320 65% 44%;
+  --chart-3: 160 65% 32%;
+  --chart-4: 38 75% 38%;
+  --chart-5: 200 65% 40%;
 }
 
-/* ── Light mode: global overrides for hardcoded Tailwind white classes ── */
-
-/* Text: white/N → dark ink */
+/* ── Light mode: warm ink text (replaces cold white/N classes) ── */
 html.light [class*="text-white"] {
-  color: rgba(22, 32, 74, 0.85) !important;
+  color: rgba(60, 35, 8, 0.82) !important;
 }
-/* More muted text variants (white/20 through white/35) */
 html.light [class*="text-white\/2"],
 html.light [class*="text-white\/3"] {
-  color: rgba(22, 32, 74, 0.35) !important;
+  color: rgba(60, 35, 8, 0.32) !important;
 }
 html.light [class*="text-white\/4"],
 html.light [class*="text-white\/5"] {
-  color: rgba(22, 32, 74, 0.55) !important;
+  color: rgba(60, 35, 8, 0.52) !important;
 }
 html.light [class*="text-white\/6"],
 html.light [class*="text-white\/7"] {
-  color: rgba(22, 32, 74, 0.78) !important;
+  color: rgba(60, 35, 8, 0.72) !important;
 }
 html.light [class*="text-white\/8"],
 html.light [class*="text-white\/9"],
 html.light .text-white {
-  color: rgba(22, 32, 74, 0.95) !important;
+  color: rgba(60, 35, 8, 0.92) !important;
 }
 
-/* Borders: white/N → subtle warm dark border */
+/* ── Light mode: borders → warm tan ── */
 html.light [class*="border-white"] {
-  border-color: rgba(22, 32, 74, 0.12) !important;
+  border-color: rgba(100, 65, 15, 0.14) !important;
 }
 html.light [class*="border-white\/1"],
 html.light [class*="border-white\/2"] {
-  border-color: rgba(22, 32, 74, 0.08) !important;
-}
-html.light [class*="border-white\/3"],
-html.light [class*="border-white\/4"] {
-  border-color: rgba(22, 32, 74, 0.12) !important;
+  border-color: rgba(100, 65, 15, 0.08) !important;
 }
 html.light [class*="border-white\/5"],
 html.light [class*="border-white\/6"],
 html.light [class*="border-white\/7"],
 html.light [class*="border-white\/8"] {
-  border-color: rgba(22, 32, 74, 0.18) !important;
+  border-color: rgba(100, 65, 15, 0.18) !important;
 }
 
-/* Backgrounds: white/N → dark ink tint */
+/* ── Light mode: background tints ── */
 html.light [class*="bg-white\/"] {
-  background-color: rgba(22, 32, 74, 0.04) !important;
+  background-color: rgba(100, 65, 15, 0.04) !important;
 }
 html.light [class*="bg-white\/6"],
 html.light [class*="bg-white\/7"],
 html.light [class*="bg-white\/8"] {
-  background-color: rgba(22, 32, 74, 0.06) !important;
-}
-html.light [class*="bg-white\/9"],
-html.light [class*="bg-white\/10"] {
-  background-color: rgba(22, 32, 74, 0.08) !important;
+  background-color: rgba(100, 65, 15, 0.06) !important;
 }
 
-/* Hover states */
-html.light [class*="hover:bg-white\/"] {
-  --hover-tint: rgba(22, 32, 74, 0.07);
-}
-
-/* Placeholder text */
+/* ── Light mode: placeholders ── */
 html.light input::placeholder,
 html.light textarea::placeholder {
-  color: rgba(22, 32, 74, 0.35) !important;
+  color: rgba(100, 65, 15, 0.40) !important;
 }
 
-/* Divider lines */
-html.light [class*="bg-white\/6"][class*="h-px"],
-html.light [class*="bg-white\/8"][class*="h-px"] {
-  background-color: rgba(22, 32, 74, 0.12) !important;
-}
-
-/* ── Light mode: professional page body ── */
-html.light body {
-  background:
-    linear-gradient(160deg, hsl(38, 35%, 91%) 0%, hsl(36, 28%, 93%) 50%, hsl(34, 25%, 91%) 100%);
-  min-height: 100dvh;
-}
-
-/* ── Light mode: fixed headers get warm background ── */
+/* ── Light mode: fixed header bar ── */
 html.light .bg-background\/95 {
-  background: hsla(38, 30%, 93%, 0.96) !important;
-  border-bottom-color: rgba(22, 32, 74, 0.10) !important;
+  background: hsla(34, 32%, 88%, 0.97) !important;
+  border-bottom-color: rgba(120, 80, 20, 0.18) !important;
+  box-shadow: 0 2px 16px rgba(100, 65, 15, 0.08) !important;
 }
 
 /* ── Light mode: scrollbar ── */
-html.light ::-webkit-scrollbar-track { background: hsl(38, 28%, 90%); }
-html.light ::-webkit-scrollbar-thumb { background: rgba(22, 32, 74, 0.20); border-radius: 99px; }
+html.light ::-webkit-scrollbar-track { background: hsl(34, 28%, 86%); }
+html.light ::-webkit-scrollbar-thumb { background: rgba(100, 65, 15, 0.22); border-radius: 99px; }
 
 /* ═══════════════════════════════════════════
    BASE STYLES
 ═══════════════════════════════════════════ */
 @layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply font-sans antialiased bg-background text-foreground;
-  }
+  * { @apply border-border; }
+  body { @apply font-sans antialiased bg-background text-foreground; }
 }
 
 /* ── Dark mode: professional gradient body ── */
-html.dark body,
-body {
+html.dark body, body {
   background:
     radial-gradient(ellipse 90% 55% at 50% -5%, rgba(99,102,241,0.10) 0%, transparent 65%),
     radial-gradient(ellipse 60% 40% at 85% 105%, rgba(139,92,246,0.06) 0%, transparent 60%),
@@ -285,39 +234,141 @@ body {
   min-height: 100dvh;
 }
 
+/* ── Light mode: warm wooden desk as background ── */
+html.light body {
+  background:
+    radial-gradient(ellipse 100% 50% at 50% -5%, rgba(195, 145, 65, 0.18) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 60% at 90% 110%, rgba(160, 110, 40, 0.10) 0%, transparent 55%),
+    linear-gradient(160deg,
+      hsl(27, 38%, 74%) 0%,
+      hsl(30, 32%, 78%) 35%,
+      hsl(32, 28%, 76%) 65%,
+      hsl(28, 35%, 73%) 100%
+    );
+  min-height: 100dvh;
+}
+
 /* ═══════════════════════════════════════════
-   QUESTION CARD — book-page in light mode
+   QUESTION CARD — paper / book page
 ═══════════════════════════════════════════ */
 .chorcha-question-card {
-  transition: background 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  transition: background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
+/* Dark mode: subtle default */
+html.dark .chorcha-question-card,
+.chorcha-question-card {
+  background: rgba(255,255,255,0.03);
+}
+
+/* ── Light mode: FULL BOOK PAGE experience ── */
 html.light .chorcha-question-card {
-  background: linear-gradient(
-    135deg,
-    hsl(40, 38%, 98%) 0%,
-    hsl(38, 32%, 96%) 60%,
-    hsl(36, 28%, 95%) 100%
-  ) !important;
-  border-color: hsl(36, 25%, 80%) !important;
+  background:
+    /* ── Horizontal ruled lines — like lined paper ── */
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 28px,
+      rgba(155, 110, 40, 0.065) 28px,
+      rgba(155, 110, 40, 0.065) 29px
+    ),
+    /* ── Warm cream page gradient ── */
+    linear-gradient(
+      180deg,
+      #fefcf3 0%,
+      #faf6e8 55%,
+      #f7f2df 100%
+    ) !important;
+
+  border: 1px solid #ccb47e !important;
+  border-left: 4px solid #b08430 !important;    /* golden book spine */
+  border-radius: 2px 14px 14px 2px !important;  /* book page corners */
+
   box-shadow:
-    0 1px 3px rgba(22, 32, 74, 0.06),
-    0 4px 12px rgba(22, 32, 74, 0.04),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+    0 1px 3px  rgba(110, 70, 12, 0.08),
+    0 4px 14px rgba(110, 70, 12, 0.10),
+    0 18px 48px rgba(110, 70, 12, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 3px 0 8px rgba(110, 70, 12, 0.04) !important;
+
+  color: #1c0e00 !important;
 }
 
+/* ── Book page: question body typography ── */
+html.light .chorcha-q-body {
+  font-family: Georgia, 'Times New Roman', serif !important;
+  font-size: 0.9375rem !important;
+  line-height: 1.88 !important;
+  color: #1c0e00 !important;
+  letter-spacing: 0.010em;
+  word-spacing: 0.04em;
+}
+
+html.light .chorcha-q-body p,
+html.light .chorcha-q-body span,
+html.light .chorcha-q-body div,
+html.light .chorcha-q-body strong,
+html.light .chorcha-q-body em {
+  color: inherit !important;
+  font-family: inherit !important;
+}
+
+/* ── All text inside card → warm ink hierarchy ── */
+html.light .chorcha-question-card [class*="text-white\/2"],
+html.light .chorcha-question-card [class*="text-white\/3"] {
+  color: rgba(80, 50, 10, 0.32) !important;
+}
+html.light .chorcha-question-card [class*="text-white\/4"],
+html.light .chorcha-question-card [class*="text-white\/5"] {
+  color: rgba(80, 50, 10, 0.52) !important;
+}
+html.light .chorcha-question-card [class*="text-white\/6"],
+html.light .chorcha-question-card [class*="text-white\/7"] {
+  color: rgba(80, 50, 10, 0.72) !important;
+}
+html.light .chorcha-question-card [class*="text-white\/8"],
+html.light .chorcha-question-card [class*="text-white\/9"],
+html.light .chorcha-question-card .text-white {
+  color: rgba(40, 22, 2, 0.92) !important;
+}
 html.light .chorcha-question-card [class*="text-white"] {
-  color: rgba(22, 32, 74, 0.85) !important;
+  color: rgba(60, 35, 8, 0.82) !important;
 }
 
+/* ── Borders inside card → warm tan ── */
+html.light .chorcha-question-card [class*="border-white"] {
+  border-color: rgba(120, 80, 18, 0.16) !important;
+}
+
+/* ── Backgrounds inside card → warm parchment tint ── */
 html.light .chorcha-question-card [class*="bg-white\/"] {
-  background-color: rgba(22, 32, 74, 0.04) !important;
+  background-color: rgba(120, 80, 18, 0.05) !important;
 }
 
-/* Solution/explanation sub-panels in light */
-html.light .chorcha-question-card [class*="bg-white\/4"][class*="rounded"] {
-  background-color: rgba(22, 32, 74, 0.04) !important;
-  border-color: rgba(22, 32, 74, 0.10) !important;
+/* ── Sub-panels: answer / solution / AI ── */
+html.light .chorcha-question-card .bg-sky-500\/6 {
+  background: rgba(30, 100, 180, 0.06) !important;
+}
+html.light .chorcha-question-card .bg-purple-500\/5 {
+  background: rgba(120, 60, 180, 0.06) !important;
+}
+html.light .chorcha-question-card .bg-amber-500\/5 {
+  background: rgba(180, 100, 20, 0.06) !important;
+}
+html.light .chorcha-question-card .bg-sky-500\/5 {
+  background: rgba(30, 100, 180, 0.05) !important;
+}
+
+/* ── SQ Tap-to-reveal button ── */
+html.light .chorcha-question-card [class*="border-sky-500\/30"][class*="bg-sky-500"] {
+  background: rgba(30, 80, 180, 0.06) !important;
+  border-color: rgba(30, 80, 180, 0.28) !important;
+}
+
+/* ── Input & textarea in card ── */
+html.light .chorcha-question-card input::placeholder,
+html.light .chorcha-question-card textarea::placeholder {
+  color: rgba(100, 65, 15, 0.40) !important;
 }
 
 /* ═══════════════════════════════════════════
@@ -329,8 +380,7 @@ html.light .chorcha-question-card [class*="bg-white\/4"][class*="rounded"] {
   font-size: 0.875rem;
   color: inherit;
 }
-.chorcha-table td,
-.chorcha-table th {
+.chorcha-table td, .chorcha-table th {
   border: 1px solid rgba(255, 255, 255, 0.15);
   padding: 4px 10px;
   text-align: left;
@@ -343,14 +393,13 @@ html.light .chorcha-question-card [class*="bg-white\/4"][class*="rounded"] {
 .chorcha-table tr:nth-child(even) {
   background: rgba(255, 255, 255, 0.03);
 }
-
 html.light .chorcha-table td,
 html.light .chorcha-table th {
-  border-color: rgba(22, 32, 74, 0.14);
+  border-color: rgba(120, 80, 18, 0.16);
 }
 html.light .chorcha-table th {
-  background: rgba(22, 32, 74, 0.05);
+  background: rgba(120, 80, 18, 0.06);
 }
 html.light .chorcha-table tr:nth-child(even) {
-  background: rgba(22, 32, 74, 0.025);
+  background: rgba(120, 80, 18, 0.03);
 }

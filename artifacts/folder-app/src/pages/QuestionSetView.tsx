@@ -1,4 +1,18 @@
 import { useState, useCallback, useRef, useEffect, useMemo, memo } from "react";
+
+function useIsLight() {
+  const [isLight, setIsLight] = useState(() =>
+    typeof document !== "undefined" && document.documentElement.classList.contains("light")
+  );
+  useEffect(() => {
+    const obs = new MutationObserver(() =>
+      setIsLight(document.documentElement.classList.contains("light"))
+    );
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
+  return isLight;
+}
 import { useParams, Link, useLocation, useSearch } from "wouter";
 import { useGetQuestionSet, useGetFolderBreadcrumb, Question } from "@workspace/api-client-react";
 import { MathText } from "@/components/folder/MathText";
@@ -101,12 +115,13 @@ interface QCardProps {
   selected?: boolean;
   onToggleSelect?: () => void;
   isHighlighted?: boolean;
+  isLight?: boolean;
 }
 
 function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorderToPosition,
   mode, practiceSelected, practiceRevealed, onPracticeSelect,
   examSelected, examSubmitted, onExamSelect, cardRef,
-  selectMode, selected, onToggleSelect, isHighlighted }: QCardProps) {
+  selectMode, selected, onToggleSelect, isHighlighted, isLight = false }: QCardProps) {
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -348,13 +363,20 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
     if (isPractice) {
       const isSelected = practiceSelected === opt.letter;
       const revealed = practiceRevealed && practiceSelected != null;
-      let bg = "rgba(255,255,255,0.04)", border = "rgba(255,255,255,0.06)";
-      let lBg = "rgba(255,255,255,0.08)", lColor = "rgba(255,255,255,0.5)", tColor = "rgba(255,255,255,0.6)";
+      let bg    = isLight ? "rgba(100,65,15,0.04)"  : "rgba(255,255,255,0.04)";
+      let border = isLight ? "rgba(100,65,15,0.14)"  : "rgba(255,255,255,0.06)";
+      let lBg   = isLight ? "rgba(100,65,15,0.10)"  : "rgba(255,255,255,0.08)";
+      let lColor = isLight ? "rgba(60,35,5,0.58)"   : "rgba(255,255,255,0.5)";
+      let tColor = isLight ? "rgba(40,22,2,0.82)"   : "rgba(255,255,255,0.6)";
       if (revealed) {
-        if (isCorrect) { bg = "rgba(34,197,94,0.13)"; border = "rgba(34,197,94,0.40)"; lBg = "#22c55e"; lColor = "#000"; tColor = "rgba(255,255,255,0.95)"; }
-        else if (isSelected) { bg = "rgba(239,68,68,0.13)"; border = "rgba(239,68,68,0.40)"; lBg = "#ef4444"; lColor = "#fff"; tColor = "rgba(255,255,255,0.70)"; }
+        if (isCorrect)       { bg = "rgba(34,197,94,0.13)"; border = "rgba(34,197,94,0.40)"; lBg = "#22c55e"; lColor = "#000"; tColor = isLight ? "rgba(15,55,20,0.90)" : "rgba(255,255,255,0.95)"; }
+        else if (isSelected) { bg = "rgba(239,68,68,0.13)"; border = "rgba(239,68,68,0.40)"; lBg = "#ef4444"; lColor = "#fff"; tColor = isLight ? "rgba(90,15,10,0.85)" : "rgba(255,255,255,0.70)"; }
       } else if (isSelected) {
-        bg = "rgba(255,255,255,0.09)"; border = "rgba(255,255,255,0.22)"; lBg = "rgba(255,255,255,0.22)"; lColor = "rgba(255,255,255,0.9)"; tColor = "rgba(255,255,255,0.80)";
+        bg = isLight ? "rgba(100,65,15,0.09)"  : "rgba(255,255,255,0.09)";
+        border = isLight ? "rgba(100,65,15,0.32)"  : "rgba(255,255,255,0.22)";
+        lBg = isLight ? "rgba(100,65,15,0.22)"  : "rgba(255,255,255,0.22)";
+        lColor = isLight ? "rgba(60,35,5,0.90)"   : "rgba(255,255,255,0.9)";
+        tColor = isLight ? "rgba(30,15,0,0.92)"   : "rgba(255,255,255,0.80)";
       }
       return (
         <button key={opt.letter} onClick={() => { if (!practiceSelected) handlePracticeOptionSelect(opt.letter); }}
@@ -370,8 +392,11 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
     if (isExam) {
       const isSelected = examSelected === opt.letter;
       const revealed = examSubmitted;
-      let bg = "rgba(255,255,255,0.04)", border = "rgba(255,255,255,0.06)";
-      let lBg = "rgba(255,255,255,0.08)", lColor = "rgba(255,255,255,0.5)", tColor = "rgba(255,255,255,0.6)";
+      let bg    = isLight ? "rgba(100,65,15,0.04)"  : "rgba(255,255,255,0.04)";
+      let border = isLight ? "rgba(100,65,15,0.14)"  : "rgba(255,255,255,0.06)";
+      let lBg   = isLight ? "rgba(100,65,15,0.10)"  : "rgba(255,255,255,0.08)";
+      let lColor = isLight ? "rgba(60,35,5,0.58)"   : "rgba(255,255,255,0.5)";
+      let tColor = isLight ? "rgba(40,22,2,0.82)"   : "rgba(255,255,255,0.6)";
       if (revealed) {
         const isSkipped = !examSelected;
         if (isCorrect && isSelected) {
@@ -403,12 +428,19 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
 
     // Solution mode — only green for the correct answer
     const show = showSol && isCorrect;
+    const sNeutBg  = isLight ? "rgba(100,65,15,0.04)"  : "rgba(255,255,255,0.04)";
+    const sNeutBrd = isLight ? "rgba(100,65,15,0.14)"  : "rgba(255,255,255,0.06)";
+    const sNeutLBg = isLight ? "rgba(100,65,15,0.10)"  : "rgba(255,255,255,0.08)";
+    const sNeutLC  = isLight ? "rgba(60,35,5,0.58)"    : "rgba(255,255,255,0.5)";
+    const sNeutTC  = isLight ? "rgba(40,22,2,0.80)"    : "rgba(255,255,255,0.6)";
     return (
       <div key={opt.letter} className="flex items-start gap-2 p-2.5 rounded-xl transition-colors"
-        style={show ? { background: "rgba(34,197,94,0.13)", border: "1px solid rgba(34,197,94,0.40)" } : { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+        style={show ? { background: "rgba(34,197,94,0.13)", border: "1px solid rgba(34,197,94,0.40)" } : { background: sNeutBg, border: `1px solid ${sNeutBrd}` }}>
         <span className="flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold"
-          style={show ? { background: "#22c55e", color: "#000" } : { background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)" }}>{opt.letter}</span>
-        <span className={`text-xs leading-relaxed ${show ? "text-white/95 font-medium" : "text-white/60"}`}><MathText text={opt.text} imageBlock={false} /></span>
+          style={show ? { background: "#22c55e", color: "#000" } : { background: sNeutLBg, color: sNeutLC }}>{opt.letter}</span>
+        <span className="text-xs leading-relaxed" style={{ color: show ? (isLight ? "rgba(15,55,20,0.90)" : "rgba(255,255,255,0.95)") : sNeutTC, fontWeight: show ? 500 : undefined }}>
+          <MathText text={opt.text} imageBlock={false} />
+        </span>
       </div>
     );
   }
@@ -460,7 +492,7 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
               </div>
             )}
             {q.questionText && (
-              <div className={`text-white/90 text-sm leading-relaxed ${isCq ? "p-3 rounded-xl bg-amber-500/5 border border-amber-500/10" : isSq ? "p-3 rounded-xl bg-sky-500/5 border border-sky-500/10" : ""}`}>
+              <div className={`chorcha-q-body text-white/90 text-sm leading-relaxed ${isCq ? "p-3 rounded-xl bg-amber-500/5 border border-amber-500/10" : isSq ? "p-3 rounded-xl bg-sky-500/5 border border-sky-500/10" : ""}`}>
                 <MathText text={q.questionText} />
               </div>
             )}
@@ -1773,6 +1805,7 @@ export function QuestionSetView() {
   const isPractice = mode === "practice";
   const isSolution = mode === "solution";
   const isExam = mode === "exam";
+  const isLight = useIsLight();
 
   const answeredCount = isExam ? Object.keys(examAnswers).length : Object.keys(practiceAnswers).length;
 
@@ -1863,6 +1896,7 @@ export function QuestionSetView() {
             selected={isSolution ? selectedIds.has(q.id) : undefined}
             onToggleSelect={isSolution ? () => toggleSelect(q.id) : undefined}
             isHighlighted={highlightedId === q.id}
+            isLight={isLight}
           />
         ))}
         {/* Exam submit */}
