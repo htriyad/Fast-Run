@@ -360,6 +360,13 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
   function renderMCQOption(opt: { letter: string; text: string }) {
     const isCorrect = !!q.answer && opt.letter.toUpperCase() === q.answer.toUpperCase();
 
+    // ── Shared percentage calc (shown inline after answer) ──────────────────
+    const statTotal = Object.values(qStats).reduce((a, b) => a + b, 0);
+    const showPct = statTotal > 0 && (
+      practiceSelected != null || examSelected != null || examSubmitted || mode === "solution"
+    );
+    const pct = showPct ? Math.round(((qStats[opt.letter] ?? 0) / statTotal) * 100) : 0;
+
     if (isPractice) {
       const isSelected = practiceSelected === opt.letter;
       const revealed = practiceRevealed && practiceSelected != null;
@@ -368,9 +375,18 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
       let lBg   = isLight ? "rgba(100,65,15,0.10)"  : "rgba(255,255,255,0.08)";
       let lColor = isLight ? "rgba(60,35,5,0.58)"   : "rgba(255,255,255,0.5)";
       let tColor = isLight ? "rgba(40,22,2,0.82)"   : "rgba(255,255,255,0.6)";
+      let pctFill = isLight ? "rgba(100,65,15,0.07)" : "rgba(255,255,255,0.06)";
+      let pctColor = isLight ? "rgba(100,65,15,0.38)" : "rgba(255,255,255,0.28)";
       if (revealed) {
-        if (isCorrect)       { bg = "rgba(34,197,94,0.13)"; border = "rgba(34,197,94,0.40)"; lBg = "#22c55e"; lColor = "#000"; tColor = isLight ? "rgba(15,55,20,0.90)" : "rgba(255,255,255,0.95)"; }
-        else if (isSelected) { bg = "rgba(239,68,68,0.13)"; border = "rgba(239,68,68,0.40)"; lBg = "#ef4444"; lColor = "#fff"; tColor = isLight ? "rgba(90,15,10,0.85)" : "rgba(255,255,255,0.70)"; }
+        if (isCorrect) {
+          bg = "rgba(34,197,94,0.13)"; border = "rgba(34,197,94,0.40)"; lBg = "#22c55e"; lColor = "#000";
+          tColor = isLight ? "rgba(15,55,20,0.90)" : "rgba(255,255,255,0.95)";
+          pctFill = "rgba(34,197,94,0.12)"; pctColor = isLight ? "#16a34a" : "#4ade80";
+        } else if (isSelected) {
+          bg = "rgba(239,68,68,0.13)"; border = "rgba(239,68,68,0.40)"; lBg = "#ef4444"; lColor = "#fff";
+          tColor = isLight ? "rgba(90,15,10,0.85)" : "rgba(255,255,255,0.70)";
+          pctFill = "rgba(239,68,68,0.10)"; pctColor = isLight ? "rgba(180,30,10,0.80)" : "rgba(239,68,68,0.85)";
+        }
       } else if (isSelected) {
         bg = isLight ? "rgba(100,65,15,0.09)"  : "rgba(255,255,255,0.09)";
         border = isLight ? "rgba(100,65,15,0.32)"  : "rgba(255,255,255,0.22)";
@@ -381,10 +397,17 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
       return (
         <button key={opt.letter} onClick={() => { if (!practiceSelected) handlePracticeOptionSelect(opt.letter); }}
           disabled={!!practiceSelected}
-          className="flex items-start gap-2 p-2.5 rounded-xl transition-all text-left w-full active:scale-[0.98]"
+          className="flex items-center gap-2 p-2.5 rounded-xl transition-all text-left w-full active:scale-[0.98] relative overflow-hidden"
           style={{ background: bg, border: `1px solid ${border}` }}>
-          <span className="flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold transition-colors" style={{ background: lBg, color: lColor }}>{opt.letter}</span>
-          <span className="text-xs leading-relaxed" style={{ color: tColor }}><MathText text={opt.text} imageBlock={false} /></span>
+          {showPct && pct > 0 && (
+            <div className="absolute inset-y-0 left-0 rounded-xl pointer-events-none transition-all duration-700"
+              style={{ width: `${pct}%`, background: pctFill }} />
+          )}
+          <span className="relative z-[1] flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold transition-colors" style={{ background: lBg, color: lColor }}>{opt.letter}</span>
+          <span className="relative z-[1] flex-1 text-xs leading-relaxed" style={{ color: tColor }}><MathText text={opt.text} imageBlock={false} /></span>
+          {showPct && (
+            <span className="relative z-[1] flex-shrink-0 text-[11px] font-bold tabular-nums ml-1" style={{ color: pctColor }}>{pct}%</span>
+          )}
         </button>
       );
     }
@@ -397,19 +420,21 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
       let lBg   = isLight ? "rgba(100,65,15,0.10)"  : "rgba(255,255,255,0.08)";
       let lColor = isLight ? "rgba(60,35,5,0.58)"   : "rgba(255,255,255,0.5)";
       let tColor = isLight ? "rgba(40,22,2,0.82)"   : "rgba(255,255,255,0.6)";
+      let pctFill = isLight ? "rgba(100,65,15,0.07)" : "rgba(255,255,255,0.06)";
+      let pctColor = isLight ? "rgba(100,65,15,0.38)" : "rgba(255,255,255,0.28)";
       if (revealed) {
         const isSkipped = !examSelected;
         if (isCorrect && isSelected) {
-          // Correctly answered — green
-          bg = "rgba(34,197,94,0.13)"; border = "rgba(34,197,94,0.40)"; lBg = "#22c55e"; lColor = "#000"; tColor = "rgba(255,255,255,0.95)";
+          bg = "rgba(34,197,94,0.13)"; border = "rgba(34,197,94,0.40)"; lBg = "#22c55e"; lColor = "#000"; tColor = isLight ? "rgba(15,55,20,0.90)" : "rgba(255,255,255,0.95)";
+          pctFill = "rgba(34,197,94,0.12)"; pctColor = isLight ? "#16a34a" : "#4ade80";
         } else if (isCorrect && !isSkipped) {
-          // Wrong answer picked, show correct in green so user knows
-          bg = "rgba(34,197,94,0.13)"; border = "rgba(34,197,94,0.40)"; lBg = "#22c55e"; lColor = "#000"; tColor = "rgba(255,255,255,0.95)";
+          bg = "rgba(34,197,94,0.13)"; border = "rgba(34,197,94,0.40)"; lBg = "#22c55e"; lColor = "#000"; tColor = isLight ? "rgba(15,55,20,0.90)" : "rgba(255,255,255,0.95)";
+          pctFill = "rgba(34,197,94,0.12)"; pctColor = isLight ? "#16a34a" : "#4ade80";
         } else if (isCorrect && isSkipped) {
-          // Skipped — ash/slate to distinguish from correct
           bg = "rgba(148,163,184,0.10)"; border = "rgba(148,163,184,0.30)"; lBg = "rgba(148,163,184,0.30)"; lColor = "rgba(255,255,255,0.65)"; tColor = "rgba(255,255,255,0.60)";
         } else if (isSelected) {
           bg = "rgba(239,68,68,0.13)"; border = "rgba(239,68,68,0.40)"; lBg = "#ef4444"; lColor = "#fff";
+          pctFill = "rgba(239,68,68,0.10)"; pctColor = isLight ? "rgba(180,30,10,0.80)" : "rgba(239,68,68,0.85)";
         }
       } else if (isSelected) {
         bg = "rgba(99,102,241,0.15)"; border = "rgba(99,102,241,0.40)"; lBg = "#6366f1"; lColor = "#fff"; tColor = "rgba(255,255,255,0.90)";
@@ -418,10 +443,17 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
       return (
         <button key={opt.letter} onClick={() => { if (!locked) handleExamOptionSelect(opt.letter); }}
           disabled={locked}
-          className="flex items-start gap-2 p-2.5 rounded-xl transition-all text-left w-full active:scale-[0.98]"
+          className="flex items-center gap-2 p-2.5 rounded-xl transition-all text-left w-full active:scale-[0.98] relative overflow-hidden"
           style={{ background: bg, border: `1px solid ${border}` }}>
-          <span className="flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold" style={{ background: lBg, color: lColor }}>{opt.letter}</span>
-          <span className="text-xs leading-relaxed" style={{ color: tColor }}><MathText text={opt.text} imageBlock={false} /></span>
+          {showPct && pct > 0 && (
+            <div className="absolute inset-y-0 left-0 rounded-xl pointer-events-none transition-all duration-700"
+              style={{ width: `${pct}%`, background: pctFill }} />
+          )}
+          <span className="relative z-[1] flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold" style={{ background: lBg, color: lColor }}>{opt.letter}</span>
+          <span className="relative z-[1] flex-1 text-xs leading-relaxed" style={{ color: tColor }}><MathText text={opt.text} imageBlock={false} /></span>
+          {showPct && (
+            <span className="relative z-[1] flex-shrink-0 text-[11px] font-bold tabular-nums ml-1" style={{ color: pctColor }}>{pct}%</span>
+          )}
         </button>
       );
     }
@@ -433,14 +465,27 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
     const sNeutLBg = isLight ? "rgba(100,65,15,0.10)"  : "rgba(255,255,255,0.08)";
     const sNeutLC  = isLight ? "rgba(60,35,5,0.58)"    : "rgba(255,255,255,0.5)";
     const sNeutTC  = isLight ? "rgba(40,22,2,0.80)"    : "rgba(255,255,255,0.6)";
+    const sPctFill  = show
+      ? "rgba(34,197,94,0.12)"
+      : (isLight ? "rgba(100,65,15,0.07)" : "rgba(255,255,255,0.06)");
+    const sPctColor = show
+      ? (isLight ? "#16a34a" : "#4ade80")
+      : (isLight ? "rgba(100,65,15,0.38)" : "rgba(255,255,255,0.28)");
     return (
-      <div key={opt.letter} className="flex items-start gap-2 p-2.5 rounded-xl transition-colors"
+      <div key={opt.letter} className="flex items-center gap-2 p-2.5 rounded-xl transition-colors relative overflow-hidden"
         style={show ? { background: "rgba(34,197,94,0.13)", border: "1px solid rgba(34,197,94,0.40)" } : { background: sNeutBg, border: `1px solid ${sNeutBrd}` }}>
-        <span className="flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold"
+        {showPct && pct > 0 && (
+          <div className="absolute inset-y-0 left-0 rounded-xl pointer-events-none transition-all duration-700"
+            style={{ width: `${pct}%`, background: sPctFill }} />
+        )}
+        <span className="relative z-[1] flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold"
           style={show ? { background: "#22c55e", color: "#000" } : { background: sNeutLBg, color: sNeutLC }}>{opt.letter}</span>
-        <span className="text-xs leading-relaxed" style={{ color: show ? (isLight ? "rgba(15,55,20,0.90)" : "rgba(255,255,255,0.95)") : sNeutTC, fontWeight: show ? 500 : undefined }}>
+        <span className="relative z-[1] flex-1 text-xs leading-relaxed" style={{ color: show ? (isLight ? "rgba(15,55,20,0.90)" : "rgba(255,255,255,0.95)") : sNeutTC, fontWeight: show ? 500 : undefined }}>
           <MathText text={opt.text} imageBlock={false} />
         </span>
+        {showPct && (
+          <span className="relative z-[1] flex-shrink-0 text-[11px] font-bold tabular-nums ml-1" style={{ color: sPctColor }}>{pct}%</span>
+        )}
       </div>
     );
   }
@@ -531,43 +576,6 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
             {q.options.map(opt => renderMCQOption(opt))}
           </div>
         )}
-        {/* Option percentage stats — only after user answers in this session */}
-        {q.type === "mcq" && !renderAsNoOptions && q.options && q.options.length > 0 &&
-          (practiceSelected != null || examSelected != null || examSubmitted || mode === "solution") && (() => {
-          const total = Object.values(qStats).reduce((a, b) => a + b, 0);
-          if (total === 0) return null;
-          const userPick = (practiceSelected ?? examSelected)?.toUpperCase();
-          return (
-            <div className="ml-10 mt-2 space-y-1.5">
-              {q.options.map(opt => {
-                const count = qStats[opt.letter] ?? 0;
-                const pct = Math.round((count / total) * 100);
-                const isCorrect = !!q.answer && opt.letter.toUpperCase() === q.answer.toUpperCase();
-                const isUserPick = userPick === opt.letter.toUpperCase();
-                return (
-                  <div key={opt.letter} className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold w-4 text-center flex-shrink-0"
-                      style={{ color: isCorrect ? "#4ade80" : isUserPick ? "rgba(239,68,68,0.85)" : "rgba(255,255,255,0.28)" }}>
-                      {opt.letter}
-                    </span>
-                    <div className="flex-1 relative h-[22px] rounded-lg overflow-hidden"
-                      style={{ background: "rgba(255,255,255,0.05)" }}>
-                      <div className="absolute inset-y-0 left-0 rounded-lg transition-all duration-700"
-                        style={{
-                          width: `${pct}%`,
-                          background: isCorrect ? "rgba(34,197,94,0.28)" : isUserPick ? "rgba(239,68,68,0.2)" : "rgba(255,255,255,0.07)",
-                        }} />
-                      <span className="absolute inset-0 flex items-center px-2.5 text-[11px] font-bold tabular-nums"
-                        style={{ color: isCorrect ? "#4ade80" : isUserPick ? "rgba(239,68,68,0.85)" : "rgba(255,255,255,0.38)" }}>
-                        {pct}%
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })()}
 
 
         {/* SQ / no-options: show answer */}
