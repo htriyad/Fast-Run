@@ -13,7 +13,7 @@ import {
   Eye, EyeOff, BookOpen, Pencil, Trash2, X, Save, Plus, ImageIcon,
   Loader2, ChevronDown, ChevronUp, GripVertical, ArrowUp, ArrowDown, Check,
   BookMarked, Zap, Timer, List, RotateCcw, Trophy, ChevronLeft, Hash,
-  Link2, Copy, Square, CheckSquare, Search,
+  Link2, Copy, Square, CheckSquare, Search, FolderOpen,
 } from "lucide-react";
 import { useLinkQuestions } from "@workspace/api-client-react";
 
@@ -732,45 +732,56 @@ function AddQuestionDialog({ setId, onAdded, onClose }: { setId: number; onAdded
 }
 
 // ─── CopyToSetDialog ──────────────────────────────────────────────────────────
-type SetSearchResult = { id: number; name: string; folderId: number; folderName: string; totalQuestions: number };
+type FolderItem = { id: number; name: string; parentId: number | null; color?: string | null };
+type SetItem = { id: number; name: string; totalQuestions: number };
 
-function CopyToSetDialog({ currentSetId, selectedQuestionIds, onClose, onLinked }: {
+function CopyToFolderBrowser({ currentSetId, selectedQuestionIds, onClose, onLinked }: {
   currentSetId: number;
   selectedQuestionIds: number[];
   onClose: () => void;
   onLinked: (count: number) => void;
 }) {
   const { toast } = useToast();
-  const [search, setSearch] = useState("");
-  const [sets, setSets] = useState<SetSearchResult[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [path, setPath] = useState<Array<{ id: number; name: string }>>([]);
+  const [allFolders, setAllFolders] = useState<FolderItem[]>([]);
+  const [sets, setSets] = useState<SetItem[]>([]);
+  const [loadingFolders, setLoadingFolders] = useState(true);
+  const [loadingSets, setLoadingSets] = useState(false);
   const linkMutation = useLinkQuestions();
 
-  useEffect(() => {
-    setLoading(true);
-    const ctrl = new AbortController();
-    fetch(`${import.meta.env.BASE_URL}api/sets/search?q=${encodeURIComponent(search)}`, { signal: ctrl.signal })
-      .then(r => r.json())
-      .then((data: SetSearchResult[]) => { setSets(data); setLoading(false); })
-      .catch(e => { if (e.name !== "AbortError") setLoading(false); });
-    return () => ctrl.abort();
-  }, [search]);
+  const currentFolderId = path.length > 0 ? path[path.length - 1].id : null;
 
-  // Group by folder
-  const grouped = sets.reduce<Record<string, SetSearchResult[]>>((acc, s) => {
-    const key = s.folderName;
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(s);
-    return acc;
-  }, {});
+  useEffect(() => {
+    fetch(`${import.meta.env.BASE_URL}api/folders`)
+      .then(r => r.json())
+      .then((data: FolderItem[]) => { setAllFolders(data); setLoadingFolders(false); })
+      .catch(() => setLoadingFolders(false));
+  }, []);
+
+  useEffect(() => {
+    if (currentFolderId === null) { setSets([]); return; }
+    setLoadingSets(true);
+    fetch(`${import.meta.env.BASE_URL}api/folders/${currentFolderId}/sets`)
+      .then(r => r.json())
+      .then((data: SetItem[]) => { setSets(data); setLoadingSets(false); })
+      .catch(() => setLoadingSets(false));
+  }, [currentFolderId]);
+
+  const subfolders = allFolders.filter(f => f.parentId === currentFolderId);
+  const visibleSets = sets.filter(s => s.id !== currentSetId);
+
+  const enterFolder = (f: FolderItem) => setPath(prev => [...prev, { id: f.id, name: f.name }]);
+  const goToRoot = () => setPath([]);
+  const goToIndex = (idx: number) => setPath(prev => prev.slice(0, idx + 1));
 
   const handlePick = (targetSetId: number) => {
     linkMutation.mutate(
       { setId: targetSetId, data: { questionIds: selectedQuestionIds } },
       {
         onSuccess: (data) => {
-          toast({ title: `Linked ${(data as { linked: number }).linked} question(s) to set` });
-          onLinked((data as { linked: number }).linked);
+          const linked = (data as { linked: number }).linked;
+          toast({ title: `${linked} question${linked !== 1 ? "s" : ""} copied successfully` });
+          onLinked(linked);
           onClose();
         },
         onError: () => toast({ title: "Copy failed", variant: "destructive" }),
@@ -779,49 +790,108 @@ function CopyToSetDialog({ currentSetId, selectedQuestionIds, onClose, onLinked 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div className="relative bg-[#111] border border-white/12 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-sm max-h-[80dvh] flex flex-col" onClick={e => e.stopPropagation()}>
-        {/* Header */}
-        <div className="flex items-center gap-3 p-4 border-b border-white/8 flex-shrink-0">
-          <Copy className="w-4 h-4 text-indigo-400" />
-          <h3 className="font-bold text-white/90 flex-1">Copy {selectedQuestionIds.length} question{selectedQuestionIds.length !== 1 ? "s" : ""} to…</h3>
-          <button onClick={onClose} className="text-white/30 hover:text-white/60"><X className="w-4 h-4" /></button>
-        </div>
-        {/* Search */}
-        <div className="p-3 border-b border-white/6 flex-shrink-0">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/6 border border-white/10">
-            <Search className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />
-            <input autoFocus value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Search question sets…"
-              className="bg-transparent text-sm text-white/80 placeholder-white/25 flex-1 outline-none" />
+    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: "#0d0d0d" }}>
+      {/* Header */}
+      <div className="flex-shrink-0 border-b border-white/8 bg-[#111]/95 backdrop-blur-md">
+        <div className="flex items-center gap-3 px-4 py-3">
+          <button onClick={onClose}
+            className="w-9 h-9 rounded-xl bg-white/6 hover:bg-white/10 flex items-center justify-center transition-colors flex-shrink-0">
+            <X className="w-4 h-4 text-white/60" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] text-white/35 font-medium">
+              Copying {selectedQuestionIds.length} question{selectedQuestionIds.length !== 1 ? "s" : ""}
+            </p>
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none mt-0.5">
+              <button onClick={goToRoot}
+                className="text-sm font-semibold text-white/55 hover:text-white/85 whitespace-nowrap transition-colors flex-shrink-0">
+                All Folders
+              </button>
+              {path.map((crumb, i) => (
+                <span key={crumb.id} className="flex items-center gap-1 flex-shrink-0">
+                  <ChevronRight className="w-3.5 h-3.5 text-white/20" />
+                  <button onClick={() => goToIndex(i)}
+                    className={`text-sm font-semibold whitespace-nowrap transition-colors ${i === path.length - 1 ? "text-white/90" : "text-white/55 hover:text-white/80"}`}>
+                    {crumb.name}
+                  </button>
+                </span>
+              ))}
+            </div>
           </div>
         </div>
-        {/* List */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-3">
-          {loading && <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-white/25" /></div>}
-          {!loading && Object.keys(grouped).length === 0 && (
-            <p className="text-center text-sm text-white/25 py-6">No question sets found</p>
-          )}
-          {!loading && Object.entries(grouped).map(([folderName, folderSets]) => (
-            <div key={folderName}>
-              <p className="text-[10px] font-bold text-white/25 uppercase tracking-widest px-1 mb-1.5">{folderName}</p>
-              <div className="space-y-1">
-                {folderSets.filter(s => s.id !== currentSetId).map(s => (
-                  <button key={s.id} onClick={() => handlePick(s.id)}
-                    disabled={linkMutation.isPending}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/4 hover:bg-white/8 border border-white/6 hover:border-white/12 transition-all text-left active:scale-[0.98]">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white/85 font-medium truncate">{s.name}</p>
-                      <p className="text-[11px] text-white/30">{s.totalQuestions} questions</p>
-                    </div>
-                    {linkMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin text-white/30 flex-shrink-0" /> : <ChevronRight className="w-4 h-4 text-white/20 flex-shrink-0" />}
-                  </button>
-                ))}
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 overflow-y-auto">
+        {loadingFolders ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="w-5 h-5 animate-spin text-white/25" />
+          </div>
+        ) : (
+          <div className="p-4 space-y-2 max-w-2xl mx-auto">
+            {/* Subfolders */}
+            {subfolders.map(f => (
+              <motion.button key={f.id} onClick={() => enterFolder(f)}
+                initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
+                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-white/4 hover:bg-white/7 border border-white/8 hover:border-white/16 transition-all text-left active:scale-[0.98]">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: `${f.color ?? "#6366f1"}22` }}>
+                  <FolderOpen className="w-5 h-5" style={{ color: f.color ?? "#6366f1" }} />
+                </div>
+                <span className="flex-1 font-semibold text-white/80 text-sm truncate">{f.name}</span>
+                <ChevronRight className="w-4 h-4 text-white/25 flex-shrink-0" />
+              </motion.button>
+            ))}
+
+            {/* Divider between folders and sets */}
+            {currentFolderId !== null && subfolders.length > 0 && (
+              <div className="flex items-center gap-3 py-1">
+                <div className="flex-1 h-px bg-white/6" />
+                <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">Sets</span>
+                <div className="flex-1 h-px bg-white/6" />
               </div>
-            </div>
-          ))}
-        </div>
+            )}
+
+            {/* Sets in current folder */}
+            {currentFolderId !== null && (
+              <>
+                {loadingSets ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="w-4 h-4 animate-spin text-white/25" />
+                  </div>
+                ) : visibleSets.length > 0 ? visibleSets.map(s => (
+                  <motion.button key={s.id} onClick={() => handlePick(s.id)}
+                    disabled={linkMutation.isPending}
+                    initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-white/3 hover:bg-indigo-500/12 border border-white/6 hover:border-indigo-500/40 transition-all text-left active:scale-[0.98] disabled:opacity-50">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-indigo-500/15 flex-shrink-0">
+                      <BookOpen className="w-5 h-5 text-indigo-400" strokeWidth={1.6} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white/85 font-semibold truncate">{s.name}</p>
+                      <p className="text-[11px] text-white/30 mt-0.5">{s.totalQuestions} questions</p>
+                    </div>
+                    {linkMutation.isPending
+                      ? <Loader2 className="w-4 h-4 animate-spin text-white/30 flex-shrink-0" />
+                      : <Copy className="w-4 h-4 text-indigo-400/50 flex-shrink-0" />}
+                  </motion.button>
+                )) : !loadingSets && subfolders.length === 0 && (
+                  <p className="text-center text-sm text-white/20 py-10">No sets in this folder</p>
+                )}
+              </>
+            )}
+
+            {/* Root empty */}
+            {currentFolderId === null && subfolders.length === 0 && (
+              <p className="text-center text-sm text-white/20 py-10">No folders found</p>
+            )}
+
+            {/* Hint at root */}
+            {currentFolderId === null && subfolders.length > 0 && (
+              <p className="text-center text-xs text-white/15 pt-4">Open a folder to see its sets</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1447,7 +1517,7 @@ export function QuestionSetView() {
         )}
 
         {copyDialogOpen && (
-          <CopyToSetDialog
+          <CopyToFolderBrowser
             currentSetId={setId}
             selectedQuestionIds={[...selectedIds]}
             onClose={() => setCopyDialogOpen(false)}

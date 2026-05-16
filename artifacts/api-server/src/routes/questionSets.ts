@@ -236,6 +236,9 @@ router.post("/sets/:setId/link-questions", async (req, res) => {
 
   const values = toLink.map(qId => ({ questionId: qId, setId, questionIndex: nextIndex++, hiddenParts: [] as string[] }));
   await db.insert(setQuestionLinksTable).values(values);
+  await db.update(questionSetsTable)
+    .set({ totalQuestions: sql`${questionSetsTable.totalQuestions} + ${toLink.length}` })
+    .where(eq(questionSetsTable.id, setId));
 
   return res.json({ linked: toLink.length });
 });
@@ -243,9 +246,12 @@ router.post("/sets/:setId/link-questions", async (req, res) => {
 router.delete("/links/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
-  const [link] = await db.select({ id: setQuestionLinksTable.id }).from(setQuestionLinksTable).where(eq(setQuestionLinksTable.id, id)).limit(1);
+  const [link] = await db.select({ id: setQuestionLinksTable.id, setId: setQuestionLinksTable.setId }).from(setQuestionLinksTable).where(eq(setQuestionLinksTable.id, id)).limit(1);
   if (!link) return res.status(404).json({ error: "Link not found" });
   await db.delete(setQuestionLinksTable).where(eq(setQuestionLinksTable.id, id));
+  await db.update(questionSetsTable)
+    .set({ totalQuestions: sql`GREATEST(${questionSetsTable.totalQuestions} - 1, 0)` })
+    .where(eq(questionSetsTable.id, link.setId));
   return res.status(204).send();
 });
 
