@@ -19,6 +19,7 @@ import { DecodeDialog } from "@/components/folder/DecodeDialog";
 import { QuestionSetCard } from "@/components/folder/QuestionSetCard";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Home as HomeIcon, Plus, FolderIcon, GripVertical, Check, Pencil, Trash2, BookOpen, BookMarked, Loader2, X } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatePresence, motion } from "framer-motion";
 import { getIcon } from "@/lib/folderIcons";
@@ -202,6 +203,7 @@ export function FolderView() {
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+          <ThemeToggle size="sm" />
           {anyReorderMode ? (
             /* Reorder mode action bar */
             <>

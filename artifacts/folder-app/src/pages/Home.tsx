@@ -14,6 +14,8 @@ import { QuestionIdSearch } from "@/components/QuestionIdSearch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Plus, FolderIcon, GripVertical, Check, Layers, Hash } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { useTheme } from "@/lib/theme";
 import { AnimatePresence, motion } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -39,6 +41,8 @@ export function Home() {
   const [reorderMode, setReorderMode] = useState(false);
   const [localOrder, setLocalOrder] = useState<Folder[]>([]);
   const [idSearchOpen, setIdSearchOpen] = useState(false);
+  const { theme } = useTheme();
+  const isLight = theme === "light";
 
   const { data: folders = [], isLoading } = useListFolders({ search: search || undefined });
   const { data: stats } = useGetFolderStats();
@@ -76,7 +80,11 @@ export function Home() {
             >
               <h1
                 className="text-4xl md:text-5xl font-extrabold tracking-tight"
-                style={{
+                style={isLight ? {
+                  background: "linear-gradient(135deg, #3b1a00 30%, #6d3a00 65%, #7c3aed 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                } : {
                   background: "linear-gradient(135deg, #fff 30%, rgba(139,92,246,0.7) 70%, rgba(99,102,241,0.5) 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
@@ -109,6 +117,7 @@ export function Home() {
             transition={{ delay: 0.1, duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
             className="flex items-center gap-2 flex-shrink-0"
           >
+            <ThemeToggle />
             {reorderMode ? (
               <>
                 <Button variant="outline" size="sm" onClick={() => setReorderMode(false)} className="border-white/10 text-white/60 hover:text-white">Cancel</Button>

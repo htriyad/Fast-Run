@@ -15,6 +15,7 @@ import {
   BookMarked, Zap, Timer, List, RotateCcw, Trophy, ChevronLeft, Hash,
   Link2, Copy, Square, CheckSquare, Search, FolderOpen,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useLinkQuestions } from "@workspace/api-client-react";
 
 // ─── Theme hook ───────────────────────────────────────────────────────────────
@@ -1023,6 +1024,7 @@ function ModeSelector({ set, questionCount, breadcrumbs, onSelectMode, onReorder
           </div>
           {/* Management */}
           <div className="flex items-center gap-2 flex-shrink-0">
+            <ThemeToggle size="sm" />
             <button onClick={onAddQuestion} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-white/40 hover:text-white/70 bg-white/4 hover:bg-white/8 border border-white/8 transition-all">
               <Plus className="w-3.5 h-3.5" /> Add
             </button>
@@ -1706,6 +1708,7 @@ export function QuestionSetView() {
         <div className="sticky top-0 z-20 bg-background/90 backdrop-blur-md border-b border-white/8 px-4 py-3 flex items-center gap-3">
           <button onClick={() => { setMode(null); setExamSubmitted(false); setExamAnswers({}); }} className="w-8 h-8 rounded-xl bg-white/6 hover:bg-white/10 flex items-center justify-center"><ChevronLeft className="w-4 h-4 text-white/60" /></button>
           <span className="font-bold text-white/80 flex-1 truncate">Exam Results — {set.name}</span>
+          <ThemeToggle size="sm" />
         </div>
         <ExamResults questions={visible} examAnswers={examAnswers} negativeMarking={negativeMarking}
           onRetry={() => { setExamAnswers({}); setExamSubmitted(false); setExamStarted(false); setSelectedDuration(null); }}
@@ -1882,6 +1885,7 @@ export function QuestionSetView() {
               </button>
             </>
           )}
+          <ThemeToggle size="sm" />
         </div>
       </div>
 
