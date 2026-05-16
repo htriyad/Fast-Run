@@ -363,7 +363,9 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
     // ── Shared percentage calc (shown inline after answer) ──────────────────
     const statTotal = Object.values(qStats).reduce((a, b) => a + b, 0);
     const showPct = statTotal > 0 && (
-      practiceSelected != null || examSelected != null || examSubmitted || mode === "solution"
+      (isPractice && practiceSelected != null) ||
+      (isExam && !!examSubmitted) ||
+      mode === "solution"
     );
     const pct = showPct ? Math.round(((qStats[opt.letter] ?? 0) / statTotal) * 100) : 0;
 
