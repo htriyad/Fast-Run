@@ -1180,6 +1180,8 @@ function ExamResults({ questions, examAnswers, onRetry, onBack, negativeMarking 
   questions: Question[]; examAnswers: Record<number, string>; onRetry: () => void; onBack: () => void; negativeMarking?: boolean;
 }) {
   const [filter, setFilter] = useState<"all" | "correct" | "wrong" | "unanswered">("all");
+  const isLight = useIsLight();
+
   const results = questions.map((q, idx) => {
     const selected = examAnswers[q.id];
     const correct = q.answer && selected && selected.toUpperCase() === q.answer.toUpperCase();
@@ -1197,46 +1199,71 @@ function ExamResults({ questions, examAnswers, onRetry, onBack, negativeMarking 
     filter === "all" ? true : filter === "correct" ? r.correct : filter === "wrong" ? r.wrong : r.unanswered
   );
 
+  // ── Theme-aware tokens ──
+  const cardBg     = isLight ? "rgba(120,80,18,0.05)"  : "rgba(255,255,255,0.04)";
+  const cardBorder = isLight ? "rgba(120,80,18,0.16)"  : "rgba(255,255,255,0.10)";
+  const headText   = isLight ? "rgba(28,14,0,0.90)"    : "rgba(255,255,255,0.90)";
+  const subText    = isLight ? "rgba(80,50,10,0.52)"   : "rgba(255,255,255,0.40)";
+  const tabsBg     = isLight ? "rgba(120,80,18,0.06)"  : "rgba(255,255,255,0.04)";
+  const tabsBrd    = isLight ? "rgba(120,80,18,0.16)"  : "rgba(255,255,255,0.08)";
+  const tabActive  = isLight ? "rgba(120,80,18,0.14)"  : "rgba(255,255,255,0.12)";
+  const tabActTxt  = isLight ? "rgba(28,14,0,0.90)"    : "rgba(255,255,255,0.90)";
+  const tabInact   = isLight ? "rgba(80,50,10,0.40)"   : "rgba(255,255,255,0.30)";
+  const qCardNeutBg  = isLight ? "rgba(120,80,18,0.05)"  : "rgba(100,116,139,0.06)";
+  const qCardNeutBrd = isLight ? "rgba(120,80,18,0.18)"  : "rgba(100,116,139,0.25)";
+  const qText      = isLight ? "rgba(28,14,0,0.82)"    : "rgba(255,255,255,0.80)";
+  const optNeutBg  = isLight ? "rgba(120,80,18,0.04)"  : "rgba(255,255,255,0.03)";
+  const optNeutBrd = isLight ? "rgba(120,80,18,0.14)"  : "rgba(255,255,255,0.06)";
+  const optNeutLtr = isLight ? "rgba(80,50,10,0.45)"   : "rgba(255,255,255,0.35)";
+  const optNeutTxt = isLight ? "rgba(60,35,8,0.65)"    : "rgba(255,255,255,0.42)";
+  const pctNeutClr = isLight ? "rgba(100,65,15,0.45)"  : "rgba(255,255,255,0.28)";
+  const solBg      = isLight ? "rgba(120,80,18,0.05)"  : "rgba(255,255,255,0.04)";
+  const solBrd     = isLight ? "rgba(120,80,18,0.14)"  : "rgba(255,255,255,0.08)";
+  const solLabel   = isLight ? "rgba(80,50,10,0.45)"   : "rgba(255,255,255,0.30)";
+  const solText    = isLight ? "rgba(50,28,5,0.75)"    : "rgba(255,255,255,0.65)";
+
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto px-4 py-6 md:px-8 space-y-6 pb-24">
       {/* Summary card */}
-      <div className="rounded-3xl border border-white/10 bg-white/4 p-6 text-center space-y-4">
+      <div className="rounded-3xl p-6 text-center space-y-4" style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
         <div className="w-14 h-14 mx-auto rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
           <Trophy className="w-7 h-7 text-indigo-400" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-white/90">Exam Complete</h2>
-          <p className="text-white/40 text-sm mt-1">Here's your result</p>
+          <h2 className="text-xl font-bold" style={{ color: headText }}>Exam Complete</h2>
+          <p className="text-sm mt-1" style={{ color: subText }}>Here's your result</p>
         </div>
-        {/* Net score bar (negative marking) */}
         {negativeMarking && (
           <div className="rounded-2xl bg-amber-500/8 border border-amber-500/20 px-4 py-3 flex items-center justify-between">
             <div className="text-left">
               <div className="text-xs font-semibold text-amber-400/60 uppercase tracking-wider">Net Score</div>
-              <div className={`text-3xl font-extrabold tabular-nums mt-0.5 ${netScore < 0 ? "text-red-400" : "text-amber-300"}`}>{netScoreDisplay}</div>
-              <div className="text-[11px] text-white/30 mt-0.5">out of {questions.length}</div>
+              <div className={`text-3xl font-extrabold tabular-nums mt-0.5 ${netScore < 0 ? "text-red-400" : "text-amber-500"}`}>{netScoreDisplay}</div>
+              <div className="text-[11px] mt-0.5" style={{ color: subText }}>out of {questions.length}</div>
             </div>
             <div className="text-right space-y-1">
-              <div className="text-xs text-emerald-400">+{totalCorrect} correct</div>
-              {deduction > 0 && <div className="text-xs text-red-400">−{deduction.toFixed(2)} deducted</div>}
-              <div className="text-xs text-white/25">(−0.25 per wrong)</div>
+              <div className="text-xs text-emerald-600">+{totalCorrect} correct</div>
+              {deduction > 0 && <div className="text-xs text-red-500">−{deduction.toFixed(2)} deducted</div>}
+              <div className="text-xs" style={{ color: subText }}>(−0.25 per wrong)</div>
             </div>
           </div>
         )}
         <div className="grid grid-cols-4 gap-3">
-          <div className="rounded-2xl bg-white/5 border border-white/8 p-3"><div className="text-2xl font-bold text-white/80">{questions.length}</div><div className="text-xs text-white/30 mt-1">Total</div></div>
-          <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-3"><div className="text-2xl font-bold text-emerald-400">{totalCorrect}</div><div className="text-xs text-emerald-400/50 mt-1">Correct</div></div>
-          <div className="rounded-2xl bg-red-500/10 border border-red-500/20 p-3"><div className="text-2xl font-bold text-red-400">{totalWrong}</div><div className="text-xs text-red-400/50 mt-1">Wrong</div></div>
-          <div className="rounded-2xl bg-indigo-500/10 border border-indigo-500/20 p-3"><div className="text-2xl font-bold text-indigo-400">{accuracy}%</div><div className="text-xs text-indigo-400/50 mt-1">Accuracy</div></div>
+          <div className="rounded-2xl p-3" style={{ background: isLight ? "rgba(120,80,18,0.06)" : "rgba(255,255,255,0.05)", border: `1px solid ${isLight ? "rgba(120,80,18,0.14)" : "rgba(255,255,255,0.08)"}` }}>
+            <div className="text-2xl font-bold" style={{ color: headText }}>{questions.length}</div>
+            <div className="text-xs mt-1" style={{ color: subText }}>Total</div>
+          </div>
+          <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-3"><div className="text-2xl font-bold text-emerald-500">{totalCorrect}</div><div className="text-xs text-emerald-500/60 mt-1">Correct</div></div>
+          <div className="rounded-2xl bg-red-500/10 border border-red-500/20 p-3"><div className="text-2xl font-bold text-red-500">{totalWrong}</div><div className="text-xs text-red-500/60 mt-1">Wrong</div></div>
+          <div className="rounded-2xl bg-indigo-500/10 border border-indigo-500/20 p-3"><div className="text-2xl font-bold text-indigo-500">{accuracy}%</div><div className="text-xs text-indigo-500/60 mt-1">Accuracy</div></div>
         </div>
         <div className="flex gap-2 pt-1">
-          <Button variant="outline" size="sm" onClick={onBack} className="flex-1 border-white/10 text-white/50 hover:text-white gap-1.5"><ChevronLeft className="w-4 h-4" /> Back</Button>
+          <Button variant="outline" size="sm" onClick={onBack} className="flex-1 gap-1.5" style={{ borderColor: isLight ? "rgba(120,80,18,0.20)" : undefined, color: isLight ? "rgba(60,35,8,0.65)" : undefined }}><ChevronLeft className="w-4 h-4" /> Back</Button>
           <Button size="sm" onClick={onRetry} className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white gap-1.5"><RotateCcw className="w-3.5 h-3.5" /> Retry</Button>
         </div>
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-1 p-1 rounded-2xl bg-white/4 border border-white/8 w-fit">
+      <div className="flex gap-1 p-1 rounded-2xl w-fit" style={{ background: tabsBg, border: `1px solid ${tabsBrd}` }}>
         {([
           { id: "all", label: `All (${questions.length})` },
           { id: "correct", label: `✓ ${totalCorrect}` },
@@ -1244,7 +1271,10 @@ function ExamResults({ questions, examAnswers, onRetry, onBack, negativeMarking 
           { id: "unanswered", label: `— ${totalUnanswered}` },
         ] as const).map(f => (
           <button key={f.id} onClick={() => setFilter(f.id)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${filter === f.id ? "bg-white/12 text-white/90 shadow-sm" : "text-white/30 hover:text-white/60"}`}>
+            className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
+            style={filter === f.id
+              ? { background: tabActive, color: tabActTxt, boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }
+              : { color: tabInact }}>
             {f.label}
           </button>
         ))}
@@ -1253,10 +1283,14 @@ function ExamResults({ questions, examAnswers, onRetry, onBack, negativeMarking 
       {/* Question results list */}
       <div className="space-y-3">
         {filtered.map(r => (
-          <div key={r.q.id} className={`rounded-2xl border p-4 space-y-2 ${r.correct ? "border-emerald-500/25 bg-emerald-500/5" : r.wrong ? "border-red-500/25 bg-red-500/5" : "border-slate-500/25 bg-slate-500/5"}`}>
+          <div key={r.q.id} className="rounded-2xl border p-4 space-y-2"
+            style={{
+              background: r.correct ? "rgba(34,197,94,0.06)" : r.wrong ? "rgba(239,68,68,0.06)" : qCardNeutBg,
+              borderColor: r.correct ? "rgba(34,197,94,0.28)" : r.wrong ? "rgba(239,68,68,0.28)" : qCardNeutBrd,
+            }}>
             <div className="flex items-start gap-3">
-              <span className={`flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${r.correct ? "bg-emerald-500/20 text-emerald-400" : r.wrong ? "bg-red-500/20 text-red-400" : "bg-slate-500/20 text-slate-400"}`}>{r.serialNum}</span>
-              <div className="flex-1 text-sm text-white/80 leading-relaxed"><MathText text={r.q.questionText ?? ""} /></div>
+              <span className={`flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${r.correct ? "bg-emerald-500/20 text-emerald-600" : r.wrong ? "bg-red-500/20 text-red-500" : "bg-slate-500/15 text-slate-500"}`}>{r.serialNum}</span>
+              <div className="flex-1 text-sm leading-relaxed" style={{ color: qText }}><MathText text={r.q.questionText ?? ""} /></div>
             </div>
             {r.q.type === "mcq" && r.q.options && r.q.options.length > 0 && (() => {
                 const qStats = getQStats(r.q.id);
@@ -1271,23 +1305,25 @@ function ExamResults({ questions, examAnswers, onRetry, onBack, negativeMarking 
                       const showSky = isCorrect && isSkipped;
                       const showRed = isSelected && !isCorrect;
                       const pct = statTotal > 0 ? Math.round(((qStats[opt.letter] ?? 0) / statTotal) * 100) : 0;
-                      const pctFill = showGreen ? "rgba(34,197,94,0.15)" : showSky ? "rgba(14,165,233,0.12)" : showRed ? "rgba(239,68,68,0.12)" : "rgba(255,255,255,0.05)";
-                      const pctColor = showGreen ? "#4ade80" : showSky ? "#38bdf8" : showRed ? "#f87171" : "rgba(255,255,255,0.28)";
+                      const pctFill = showGreen ? "rgba(34,197,94,0.15)" : showSky ? "rgba(14,165,233,0.12)" : showRed ? "rgba(239,68,68,0.12)" : isLight ? "rgba(120,80,18,0.06)" : "rgba(255,255,255,0.05)";
+                      const pctColor = showGreen ? (isLight ? "#16a34a" : "#4ade80") : showSky ? "#0284c7" : showRed ? (isLight ? "#dc2626" : "#f87171") : pctNeutClr;
+                      const ltrColor = showGreen ? (isLight ? "#15803d" : "#22c55e") : showSky ? (isLight ? "#0284c7" : "#38bdf8") : showRed ? (isLight ? "#dc2626" : "#ef4444") : optNeutLtr;
+                      const txtColor = showGreen ? (isLight ? "rgba(15,55,20,0.90)" : "rgba(255,255,255,0.85)") : showSky ? (isLight ? "rgba(3,60,100,0.85)" : "rgba(255,255,255,0.80)") : showRed ? (isLight ? "rgba(100,10,10,0.85)" : "rgba(255,255,255,0.65)") : optNeutTxt;
                       return (
                         <div key={opt.letter} className="flex items-center gap-2 p-2 rounded-lg text-xs relative overflow-hidden"
                           style={{
-                            background: showGreen ? "rgba(34,197,94,0.10)" : showSky ? "rgba(14,165,233,0.10)" : showRed ? "rgba(239,68,68,0.10)" : "rgba(255,255,255,0.03)",
-                            border: `1px solid ${showGreen ? "rgba(34,197,94,0.30)" : showSky ? "rgba(14,165,233,0.35)" : showRed ? "rgba(239,68,68,0.30)" : "rgba(255,255,255,0.06)"}`,
+                            background: showGreen ? "rgba(34,197,94,0.10)" : showSky ? "rgba(14,165,233,0.10)" : showRed ? "rgba(239,68,68,0.10)" : optNeutBg,
+                            border: `1px solid ${showGreen ? "rgba(34,197,94,0.30)" : showSky ? "rgba(14,165,233,0.35)" : showRed ? "rgba(239,68,68,0.30)" : optNeutBrd}`,
                           }}>
                           {pct > 0 && (
                             <div className="absolute inset-y-0 left-0 rounded-lg pointer-events-none"
                               style={{ width: `${pct}%`, background: pctFill }} />
                           )}
-                          <span className="relative z-[1] font-bold w-4" style={{ color: showGreen ? "#22c55e" : showSky ? "#38bdf8" : showRed ? "#ef4444" : "rgba(255,255,255,0.35)" }}>{opt.letter}</span>
-                          <span className="relative z-[1] flex-1" style={{ color: showGreen ? "rgba(255,255,255,0.85)" : showSky ? "rgba(255,255,255,0.80)" : showRed ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.42)" }}><MathText text={opt.text} imageBlock={false} /></span>
+                          <span className="relative z-[1] font-bold w-4" style={{ color: ltrColor }}>{opt.letter}</span>
+                          <span className="relative z-[1] flex-1" style={{ color: txtColor }}><MathText text={opt.text} imageBlock={false} /></span>
                           <span className="relative z-[1] text-[11px] font-bold tabular-nums flex-shrink-0" style={{ color: pctColor }}>{pct}%</span>
-                          {showGreen && <Check className="relative z-[1] w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />}
-                          {showSky && <span className="relative z-[1] text-[10px] font-semibold text-sky-400 flex-shrink-0">ans</span>}
+                          {showGreen && <Check className="relative z-[1] w-3.5 h-3.5 flex-shrink-0" style={{ color: isLight ? "#15803d" : "#4ade80" }} />}
+                          {showSky && <span className="relative z-[1] text-[10px] font-semibold flex-shrink-0" style={{ color: isLight ? "#0284c7" : "#38bdf8" }}>ans</span>}
                         </div>
                       );
                     })}
@@ -1301,16 +1337,16 @@ function ExamResults({ questions, examAnswers, onRetry, onBack, negativeMarking 
                   const color = CQ_COLORS[part.key] ?? "#6b7280";
                   const hasSol = !!(part.solution || part.aiSolution);
                   return (
-                    <div key={part.key} className="rounded-xl border border-white/8 bg-white/2 overflow-hidden">
+                    <div key={part.key} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${solBrd}`, background: solBg }}>
                       <div className="p-3 space-y-2">
                         <div className="flex items-start gap-2">
                           <span className="w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5" style={{ background: `${color}25`, color }}>{CQ_LABELS[part.key] ?? part.key}</span>
-                          <div className="text-sm text-white/80 leading-relaxed flex-1"><MathText text={part.text} /></div>
+                          <div className="text-sm leading-relaxed flex-1" style={{ color: qText }}><MathText text={part.text} /></div>
                         </div>
                         {hasSol && (
                           <div className="ml-8 space-y-2">
-                            {part.solution && <div className="p-3 rounded-xl" style={{ background: `${color}08`, border: `1px solid ${color}20` }}><p className="text-xs font-semibold mb-1" style={{ color: `${color}70` }}>Solution</p><div className="text-sm text-white/70"><MathText text={part.solution} /></div></div>}
-                            {part.aiSolution && <div className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/15"><p className="text-xs font-semibold text-purple-400/50 mb-1">AI Solution</p><div className="text-sm text-white/65"><MathText text={part.aiSolution} /></div></div>}
+                            {part.solution && <div className="p-3 rounded-xl" style={{ background: `${color}08`, border: `1px solid ${color}20` }}><p className="text-xs font-semibold mb-1" style={{ color: `${color}` }}>Solution</p><div className="text-sm" style={{ color: solText }}><MathText text={part.solution} /></div></div>}
+                            {part.aiSolution && <div className="p-3 rounded-xl" style={{ background: isLight ? "rgba(139,92,246,0.06)" : "rgba(139,92,246,0.05)", border: `1px solid ${isLight ? "rgba(139,92,246,0.20)" : "rgba(139,92,246,0.15)"}` }}><p className="text-xs font-semibold mb-1" style={{ color: isLight ? "rgba(109,40,217,0.70)" : "rgba(192,132,252,0.60)" }}>AI Solution</p><div className="text-sm" style={{ color: solText }}><MathText text={part.aiSolution} /></div></div>}
                           </div>
                         )}
                       </div>
@@ -1319,7 +1355,12 @@ function ExamResults({ questions, examAnswers, onRetry, onBack, negativeMarking 
                 })}
               </div>
             )}
-            {r.q.solution && <div className="ml-10 p-3 rounded-xl bg-white/4 border border-white/8"><p className="text-xs font-semibold text-white/30 mb-1">Solution</p><div className="text-sm text-white/65"><MathText text={r.q.solution} /></div></div>}
+            {r.q.solution && (
+              <div className="ml-10 p-3 rounded-xl" style={{ background: solBg, border: `1px solid ${solBrd}` }}>
+                <p className="text-xs font-semibold mb-1" style={{ color: solLabel }}>Solution</p>
+                <div className="text-sm" style={{ color: solText }}><MathText text={r.q.solution} /></div>
+              </div>
+            )}
           </div>
         ))}
       </div>
