@@ -1358,6 +1358,8 @@ export function QuestionSetView() {
   const searchStr = useSearch();
   const highlightId = parseInt(new URLSearchParams(searchStr).get("highlight") ?? "", 10) || null;
 
+  const isLight = useIsLight();
+
   const { data, isLoading } = useGetQuestionSet(setId);
   const { data: breadcrumbs = [] } = useGetFolderBreadcrumb(data?.set?.folderId ?? 0);
 
@@ -1816,7 +1818,6 @@ export function QuestionSetView() {
   const isPractice = mode === "practice";
   const isSolution = mode === "solution";
   const isExam = mode === "exam";
-  const isLight = useIsLight();
 
   const answeredCount = isExam ? Object.keys(examAnswers).length : Object.keys(practiceAnswers).length;
 
