@@ -1226,21 +1226,36 @@ function ExamResults({ questions, examAnswers, onRetry, onBack }: {
 
 // ─── Timer Hook ───────────────────────────────────────────────────────────────
 function useExamTimer(durationSecs: number | null, onExpire: () => void) {
-  const [remaining, setRemaining] = useState<number | null>(durationSecs);
-  const ref = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [remaining, setRemaining] = useState<number | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const onExpireRef = useRef(onExpire);
+  onExpireRef.current = onExpire;
+
   useEffect(() => {
-    if (durationSecs == null) return;
+    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+    if (durationSecs == null) { setRemaining(null); return; }
     setRemaining(durationSecs);
-    ref.current = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       setRemaining(prev => {
-        if (prev == null || prev <= 1) { clearInterval(ref.current!); onExpire(); return 0; }
+        if (prev == null || prev <= 1) {
+          clearInterval(intervalRef.current!); intervalRef.current = null;
+          setTimeout(() => onExpireRef.current(), 0);
+          return 0;
+        }
         return prev - 1;
       });
     }, 1000);
-    return () => { if (ref.current) clearInterval(ref.current); };
+    return () => { if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; } };
   }, [durationSecs]);
-  const formatted = remaining != null ? `${String(Math.floor(remaining / 60)).padStart(2, "0")}:${String(remaining % 60).padStart(2, "0")}` : null;
-  return { remaining, formatted };
+
+  const adjustTime = useCallback((deltaSecs: number) => {
+    setRemaining(prev => prev == null ? prev : Math.max(10, prev + deltaSecs));
+  }, []);
+
+  const formatted = remaining != null
+    ? `${String(Math.floor(remaining / 60)).padStart(2, "0")}:${String(remaining % 60).padStart(2, "0")}`
+    : null;
+  return { remaining, formatted, adjustTime };
 }
 
 // ─── Main QuestionSetView ──────────────────────────────────────────────────────
@@ -1418,7 +1433,7 @@ export function QuestionSetView() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, examAnswers, examAutoScroll]);
 
-  const { formatted: timerFormatted } = useExamTimer(
+  const { remaining: timerRemaining, formatted: timerFormatted, adjustTime: adjustTimerTime } = useExamTimer(
     mode === "exam" && examStarted && !examSubmitted ? selectedDuration : null,
     () => { setExamSubmitted(true); toast({ title: "Time's up!", description: "Exam auto-submitted." }); }
   );
@@ -1608,27 +1623,80 @@ export function QuestionSetView() {
 
   // ── Exam setup ──
   if (mode === "exam" && !examStarted) {
-    const durations = [{ label: "30 min", secs: 1800 }, { label: "45 min", secs: 2700 }, { label: "60 min", secs: 3600 }, { label: "90 min", secs: 5400 }, { label: "No timer", secs: 0 }];
+    const presets = [
+      { label: "15 min", secs: 900 }, { label: "20 min", secs: 1200 },
+      { label: "30 min", secs: 1800 }, { label: "45 min", secs: 2700 },
+      { label: "60 min", secs: 3600 }, { label: "90 min", secs: 5400 },
+    ];
+    const perQ = visible.length > 0 && selectedDuration ? Math.round(selectedDuration / visible.length) : null;
     return (
       <div className="max-w-sm mx-auto px-4 py-10 space-y-6">
-        <div className="flex items-center gap-3"><button onClick={() => setMode(null)} className="w-8 h-8 rounded-xl bg-white/6 hover:bg-white/10 flex items-center justify-center"><ChevronLeft className="w-4 h-4 text-white/60" /></button><h2 className="font-bold text-white/90 text-lg">Exam Setup</h2></div>
-        <div className="rounded-2xl border border-white/10 bg-white/4 p-5 space-y-4">
+        <div className="flex items-center gap-3">
+          <button onClick={() => setMode(null)} className="w-8 h-8 rounded-xl bg-white/6 hover:bg-white/10 flex items-center justify-center">
+            <ChevronLeft className="w-4 h-4 text-white/60" />
+          </button>
+          <h2 className="font-bold text-white/90 text-lg">Exam Setup</h2>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/4 p-5 space-y-5">
+          {/* Set info */}
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center"><Timer className="w-6 h-6 text-indigo-400" /></div>
-            <div><div className="font-bold text-white/90">{set.name}</div><div className="text-xs text-white/40">{visible.length} questions</div></div>
+            <div className="w-12 h-12 rounded-xl bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center flex-shrink-0">
+              <Timer className="w-6 h-6 text-indigo-400" />
+            </div>
+            <div>
+              <div className="font-bold text-white/90">{set.name}</div>
+              <div className="text-xs text-white/40">{visible.length} questions</div>
+            </div>
           </div>
+
+          {/* Duration presets */}
           <div>
-            <label className="text-xs font-semibold text-white/35 mb-2 block">Select Duration</label>
+            <label className="text-xs font-semibold text-white/35 mb-2.5 block uppercase tracking-wider">Time Limit</label>
             <div className="grid grid-cols-3 gap-2">
-              {durations.map(d => (
-                <button key={d.secs} onClick={() => setSelectedDuration(d.secs === 0 ? null : d.secs)}
-                  className={`py-2.5 rounded-xl text-xs font-semibold border transition-all ${(d.secs === 0 ? selectedDuration === null : selectedDuration === d.secs) ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300" : "border-white/8 text-white/35 hover:border-white/20"}`}>
+              {presets.map(d => (
+                <button key={d.secs} onClick={() => setSelectedDuration(d.secs)}
+                  className={`py-2.5 rounded-xl text-xs font-semibold border transition-all ${selectedDuration === d.secs ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300" : "border-white/8 text-white/30 hover:border-white/20 hover:text-white/55"}`}>
                   {d.label}
                 </button>
               ))}
             </div>
           </div>
-          <Button onClick={() => setExamStarted(true)} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white gap-2">
+
+          {/* Custom duration stepper */}
+          <div>
+            <label className="text-xs font-semibold text-white/35 mb-2.5 block uppercase tracking-wider">Custom Time</label>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSelectedDuration(prev => Math.max(5 * 60, (prev ?? 1800) - 5 * 60))}
+                className="w-10 h-10 rounded-xl bg-white/6 border border-white/10 flex items-center justify-center text-white/60 hover:text-white/90 hover:bg-white/10 transition-all font-bold text-lg flex-shrink-0">
+                −
+              </button>
+              <div className="flex-1 text-center">
+                <div className="text-2xl font-extrabold tabular-nums text-white/90">
+                  {selectedDuration ? `${Math.floor(selectedDuration / 60)}` : "—"}
+                  <span className="text-sm font-medium text-white/35 ml-1">min</span>
+                </div>
+                {perQ && <div className="text-[11px] text-white/25 mt-0.5">~{perQ}s per question</div>}
+              </div>
+              <button
+                onClick={() => setSelectedDuration(prev => Math.min(180 * 60, (prev ?? 1800) + 5 * 60))}
+                className="w-10 h-10 rounded-xl bg-white/6 border border-white/10 flex items-center justify-center text-white/60 hover:text-white/90 hover:bg-white/10 transition-all font-bold text-lg flex-shrink-0">
+                +
+              </button>
+            </div>
+          </div>
+
+          {/* No timer option */}
+          <button
+            onClick={() => setSelectedDuration(null)}
+            className={`w-full py-2.5 rounded-xl text-xs font-semibold border transition-all ${selectedDuration === null ? "bg-white/10 border-white/25 text-white/70" : "border-white/8 text-white/25 hover:border-white/15"}`}>
+            No Timer
+          </button>
+
+          <Button
+            onClick={() => setExamStarted(true)}
+            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white gap-2 h-11 rounded-xl font-bold">
             <Timer className="w-4 h-4" /> Start Exam
           </Button>
         </div>
@@ -1666,8 +1734,22 @@ export function QuestionSetView() {
           )}
           {/* Exam timer + count */}
           {isExam && (
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {timerFormatted && <span className={`text-xs font-mono font-bold ${timerFormatted < "05:00" ? "text-red-400" : "text-white/60"}`}>{timerFormatted}</span>}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {timerFormatted != null && !examSubmitted && (
+                <>
+                  <button onClick={() => adjustTimerTime(-300)}
+                    className="w-6 h-6 rounded-lg bg-white/6 hover:bg-red-500/20 border border-white/8 hover:border-red-500/30 flex items-center justify-center text-white/35 hover:text-red-400 transition-all text-xs font-bold leading-none">
+                    −
+                  </button>
+                  <span className={`text-xs font-mono font-bold tabular-nums px-1 ${(timerRemaining ?? 999) <= 300 ? "text-red-400" : (timerRemaining ?? 999) <= 600 ? "text-amber-400" : "text-white/70"}`}>
+                    {timerFormatted}
+                  </span>
+                  <button onClick={() => adjustTimerTime(300)}
+                    className="w-6 h-6 rounded-lg bg-white/6 hover:bg-emerald-500/20 border border-white/8 hover:border-emerald-500/30 flex items-center justify-center text-white/35 hover:text-emerald-400 transition-all text-xs font-bold leading-none">
+                    +
+                  </button>
+                </>
+              )}
               <span className="text-xs text-white/30">{answeredCount}/{visible.length}</span>
             </div>
           )}
