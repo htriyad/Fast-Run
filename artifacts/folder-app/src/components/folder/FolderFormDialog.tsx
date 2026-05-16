@@ -82,7 +82,7 @@ export function FolderFormDialog({
   const [activeIconCategory, setActiveIconCategory] = useState(ICON_CATEGORIES[0]);
 
   const form = useForm<FolderFormValues>({
-    resolver: zodResolver(folderSchema),
+    resolver: zodResolver(folderSchema as any),
     defaultValues: {
       name: initialData?.name ?? "",
       color: initialData?.color ?? FOLDER_COLORS[0].hex,

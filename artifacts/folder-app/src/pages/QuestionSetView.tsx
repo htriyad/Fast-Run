@@ -1,18 +1,4 @@
 import { useState, useCallback, useRef, useEffect, useMemo, memo } from "react";
-
-function useIsLight() {
-  const [isLight, setIsLight] = useState(() =>
-    typeof document !== "undefined" && document.documentElement.classList.contains("light")
-  );
-  useEffect(() => {
-    const obs = new MutationObserver(() =>
-      setIsLight(document.documentElement.classList.contains("light"))
-    );
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-    return () => obs.disconnect();
-  }, []);
-  return isLight;
-}
 import { useParams, Link, useLocation, useSearch } from "wouter";
 import { useGetQuestionSet, useGetFolderBreadcrumb, Question } from "@workspace/api-client-react";
 import { MathText } from "@/components/folder/MathText";
@@ -30,6 +16,21 @@ import {
   Link2, Copy, Square, CheckSquare, Search, FolderOpen,
 } from "lucide-react";
 import { useLinkQuestions } from "@workspace/api-client-react";
+
+// ─── Theme hook ───────────────────────────────────────────────────────────────
+function useIsLight() {
+  const [isLight, setIsLight] = useState(() =>
+    typeof document !== "undefined" && document.documentElement.classList.contains("light")
+  );
+  useEffect(() => {
+    const obs = new MutationObserver(() =>
+      setIsLight(document.documentElement.classList.contains("light"))
+    );
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
+  return isLight;
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const ANSWER_COLORS: Record<string, string> = { A: "#22c55e", B: "#3b82f6", C: "#f59e0b", D: "#ef4444", E: "#8b5cf6" };
