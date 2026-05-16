@@ -540,18 +540,47 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
 
         {/* SQ / no-options: show answer */}
         {(isSq || renderAsNoOptions) && (
-          <div className="ml-10">
+          <div className="ml-10 space-y-2">
+            {/* Solution mode toggle */}
             {mode === "solution" && (
-              <button onClick={() => setShowSolution(v => !v)} className="flex items-center gap-1.5 text-xs text-white/35 hover:text-white/65 transition-colors mb-2">
+              <button onClick={() => setShowSolution(v => !v)} className="flex items-center gap-1.5 text-xs text-white/35 hover:text-white/65 transition-colors">
                 {showSolution ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                 {showSolution ? "Hide answer" : "Show answer"}
               </button>
             )}
+
+            {/* Practice mode: tap-to-reveal button for SQ */}
+            {isPractice && !effectiveRevealed && (
+              <button
+                onClick={() => handlePracticeOptionSelect("✓")}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold border border-sky-500/30 bg-sky-500/8 hover:bg-sky-500/15 hover:border-sky-500/50 text-sky-400/80 hover:text-sky-300 transition-all active:scale-[0.97] w-full justify-center"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                Tap to reveal answer
+              </button>
+            )}
+
+            {/* Answers panel */}
             {(effectiveRevealed || showSolution) && (
               <div className="space-y-2">
-                {q.answer && <div className="p-3 rounded-xl bg-sky-500/6 border border-sky-500/20"><p className="text-xs font-semibold text-sky-400/50 mb-1">Answer</p><div className="text-sm text-white/75"><MathText text={q.answer} /></div></div>}
-                {q.solution && <div className="p-3 rounded-xl bg-white/4 border border-white/8"><p className="text-xs font-semibold text-white/35 mb-1">Solution</p><div className="text-sm text-white/70"><MathText text={q.solution} /></div></div>}
-                {q.aiExplanation && <div className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/15"><p className="text-xs font-semibold text-purple-400/50 mb-1">AI Explanation</p><div className="text-sm text-white/65"><MathText text={q.aiExplanation} /></div></div>}
+                {q.answer && (
+                  <div className="p-3 rounded-xl bg-sky-500/6 border border-sky-500/20">
+                    <p className="text-xs font-semibold text-sky-400/50 mb-1">Answer</p>
+                    <div className="text-sm text-white/75"><MathText text={q.answer} /></div>
+                  </div>
+                )}
+                {q.solution && (
+                  <div className="p-3 rounded-xl bg-white/4 border border-white/8">
+                    <p className="text-xs font-semibold text-white/35 mb-1">Solution</p>
+                    <div className="text-sm text-white/70"><MathText text={q.solution} /></div>
+                  </div>
+                )}
+                {q.aiExplanation && (
+                  <div className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/15">
+                    <p className="text-xs font-semibold text-purple-400/50 mb-1">AI Explanation</p>
+                    <div className="text-sm text-white/65"><MathText text={q.aiExplanation} /></div>
+                  </div>
+                )}
               </div>
             )}
           </div>
