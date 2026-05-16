@@ -1430,7 +1430,7 @@ export function QuestionSetView() {
     const timer = setTimeout(() => {
       const idx = (data.questions ?? []).findIndex(q => q.id === highlightId);
       if (idx !== -1) {
-        cardRefs.current[idx]?.scrollIntoView({ behavior: "smooth", block: "center" });
+        smoothScrollToCard(idx, 0);
       }
       // Clear the highlight ring after 4 seconds
       setTimeout(() => setHighlightedId(null), 4000);
@@ -1475,6 +1475,22 @@ export function QuestionSetView() {
   const [examAutoScroll, setExamAutoScroll] = useState(false);
 
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  // Scroll a card into the visible band between the fixed header and optional footer.
+  // Uses window.scrollBy so it works regardless of scroll-container nesting.
+  const smoothScrollToCard = useCallback((idx: number, footerH = 0) => {
+    const el = cardRefs.current[idx];
+    if (!el) return;
+    const HEADER_H = 56;
+    const rect = el.getBoundingClientRect();
+    const visibleH = window.innerHeight - HEADER_H - footerH;
+    // Delta needed to center the card in the visible band
+    const cardMidInBand = rect.top - HEADER_H + rect.height / 2;
+    const delta = cardMidInBand - visibleH / 2;
+    // Skip tiny adjustments to avoid jitter
+    if (Math.abs(delta) < 8) return;
+    window.scrollBy({ top: delta, behavior: "smooth" });
+  }, []);
 
   const questions = localQuestions ?? data?.questions ?? [];
   const visible = questions.filter(q => !q.hidden);
@@ -1532,38 +1548,44 @@ export function QuestionSetView() {
     } finally { setSavingOrder(false); }
   };
 
+  // Practice footer is ~88px (2 rows); exam footer is ~56px (1 row); solution has none
+  const PRACTICE_FOOTER = 88;
+  const EXAM_FOOTER = 56;
+
   const scrollToQuestion = (idx: number) => {
-    cardRefs.current[idx]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    const footerH = mode === "practice" ? PRACTICE_FOOTER : mode === "exam" ? EXAM_FOOTER : 0;
+    smoothScrollToCard(idx, footerH);
   };
 
   const navigatePractice = useCallback((idx: number) => {
     const clamped = Math.max(0, Math.min(idx, visible.length - 1));
     setPracticeCurrentIdx(clamped);
-    setTimeout(() => cardRefs.current[clamped]?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
-  }, [visible.length]);
+    setTimeout(() => smoothScrollToCard(clamped, PRACTICE_FOOTER), 50);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible.length, smoothScrollToCard]);
 
   const navigateExam = useCallback((idx: number) => {
     const clamped = Math.max(0, Math.min(idx, visible.length - 1));
     setExamCurrentIdx(clamped);
-    setTimeout(() => cardRefs.current[clamped]?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
-  }, [visible.length]);
+    setTimeout(() => smoothScrollToCard(clamped, EXAM_FOOTER), 50);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible.length, smoothScrollToCard]);
 
   const handlePracticeSelect = useCallback((questionId: number, letter: string) => {
     setPracticeAnswers(prev => ({ ...prev, [questionId]: letter }));
     setPracticeRevealedId(questionId);
-    // Auto-advance only when auto-scroll is on
     if (autoScroll) {
       setTimeout(() => {
         setPracticeCurrentIdx(prev => {
           const nextIdx = visible.findIndex((q, i) => i > prev && !practiceAnswers[q.id] && q.id !== questionId);
           const advance = nextIdx !== -1 ? nextIdx : prev + 1 < visible.length ? prev + 1 : prev;
-          cardRefs.current[advance]?.scrollIntoView({ behavior: "smooth", block: "center" });
+          smoothScrollToCard(advance, PRACTICE_FOOTER);
           return advance;
         });
       }, 900);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, practiceAnswers, autoScroll]);
+  }, [visible, practiceAnswers, autoScroll, smoothScrollToCard]);
 
   const handleExamSelect = useCallback((questionId: number, letter: string) => {
     setExamAnswers(prev => ({ ...prev, [questionId]: letter }));
@@ -1572,13 +1594,13 @@ export function QuestionSetView() {
         setExamCurrentIdx(prev => {
           const nextIdx = visible.findIndex((q, i) => i > prev && !examAnswers[q.id] && q.id !== questionId);
           const advance = nextIdx !== -1 ? nextIdx : prev + 1 < visible.length ? prev + 1 : prev;
-          cardRefs.current[advance]?.scrollIntoView({ behavior: "smooth", block: "center" });
+          smoothScrollToCard(advance, EXAM_FOOTER);
           return advance;
         });
       }, 700);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, examAnswers, examAutoScroll]);
+  }, [visible, examAnswers, examAutoScroll, smoothScrollToCard]);
 
   const { remaining: timerRemaining, formatted: timerFormatted, adjustTime: adjustTimerTime } = useExamTimer(
     mode === "exam" && examStarted && !examSubmitted ? selectedDuration : null,
