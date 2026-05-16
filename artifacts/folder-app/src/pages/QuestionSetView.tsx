@@ -1258,31 +1258,42 @@ function ExamResults({ questions, examAnswers, onRetry, onBack, negativeMarking 
               <span className={`flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${r.correct ? "bg-emerald-500/20 text-emerald-400" : r.wrong ? "bg-red-500/20 text-red-400" : "bg-slate-500/20 text-slate-400"}`}>{r.serialNum}</span>
               <div className="flex-1 text-sm text-white/80 leading-relaxed"><MathText text={r.q.questionText ?? ""} /></div>
             </div>
-            {r.q.type === "mcq" && r.q.options && r.q.options.length > 0 && (
-              <div className="ml-10 grid gap-1">
-                {r.q.options.map(opt => {
-                  const isCorrect = !!(r.q.answer && opt.letter.toUpperCase() === r.q.answer.toUpperCase());
-                  const isSelected = !!(r.selected && r.selected.toUpperCase() === opt.letter.toUpperCase());
-                  const isSkipped = r.unanswered;
-                  // skipped: correct answer shown in ash, not green
-                  const showGreen = isCorrect && !isSkipped;
-                  const showAsh = isCorrect && isSkipped;
-                  const showRed = isSelected && !isCorrect;
-                  return (
-                    <div key={opt.letter} className="flex items-center gap-2 p-2 rounded-lg text-xs"
-                      style={{
-                        background: showGreen ? "rgba(34,197,94,0.10)" : showAsh ? "rgba(148,163,184,0.07)" : showRed ? "rgba(239,68,68,0.10)" : "rgba(255,255,255,0.03)",
-                        border: `1px solid ${showGreen ? "rgba(34,197,94,0.25)" : showAsh ? "rgba(148,163,184,0.22)" : showRed ? "rgba(239,68,68,0.25)" : "rgba(255,255,255,0.06)"}`,
-                      }}>
-                      <span className="font-bold w-4" style={{ color: showGreen ? "#22c55e" : showAsh ? "rgba(148,163,184,0.75)" : showRed ? "#ef4444" : "rgba(255,255,255,0.35)" }}>{opt.letter}</span>
-                      <span className="flex-1" style={{ color: showGreen ? "rgba(255,255,255,0.80)" : showAsh ? "rgba(255,255,255,0.45)" : showRed ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.45)" }}><MathText text={opt.text} imageBlock={false} /></span>
-                      {showGreen && <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />}
-                      {showAsh && <span className="text-[10px] text-slate-400/60 flex-shrink-0">ans</span>}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            {r.q.type === "mcq" && r.q.options && r.q.options.length > 0 && (() => {
+                const qStats = getQStats(r.q.id);
+                const statTotal = Object.values(qStats).reduce((a, b) => a + b, 0);
+                return (
+                  <div className="ml-10 grid gap-1">
+                    {r.q.options.map(opt => {
+                      const isCorrect = !!(r.q.answer && opt.letter.toUpperCase() === r.q.answer.toUpperCase());
+                      const isSelected = !!(r.selected && r.selected.toUpperCase() === opt.letter.toUpperCase());
+                      const isSkipped = r.unanswered;
+                      const showGreen = isCorrect && !isSkipped;
+                      const showSky = isCorrect && isSkipped;
+                      const showRed = isSelected && !isCorrect;
+                      const pct = statTotal > 0 ? Math.round(((qStats[opt.letter] ?? 0) / statTotal) * 100) : 0;
+                      const pctFill = showGreen ? "rgba(34,197,94,0.15)" : showSky ? "rgba(14,165,233,0.12)" : showRed ? "rgba(239,68,68,0.12)" : "rgba(255,255,255,0.05)";
+                      const pctColor = showGreen ? "#4ade80" : showSky ? "#38bdf8" : showRed ? "#f87171" : "rgba(255,255,255,0.28)";
+                      return (
+                        <div key={opt.letter} className="flex items-center gap-2 p-2 rounded-lg text-xs relative overflow-hidden"
+                          style={{
+                            background: showGreen ? "rgba(34,197,94,0.10)" : showSky ? "rgba(14,165,233,0.10)" : showRed ? "rgba(239,68,68,0.10)" : "rgba(255,255,255,0.03)",
+                            border: `1px solid ${showGreen ? "rgba(34,197,94,0.30)" : showSky ? "rgba(14,165,233,0.35)" : showRed ? "rgba(239,68,68,0.30)" : "rgba(255,255,255,0.06)"}`,
+                          }}>
+                          {pct > 0 && (
+                            <div className="absolute inset-y-0 left-0 rounded-lg pointer-events-none"
+                              style={{ width: `${pct}%`, background: pctFill }} />
+                          )}
+                          <span className="relative z-[1] font-bold w-4" style={{ color: showGreen ? "#22c55e" : showSky ? "#38bdf8" : showRed ? "#ef4444" : "rgba(255,255,255,0.35)" }}>{opt.letter}</span>
+                          <span className="relative z-[1] flex-1" style={{ color: showGreen ? "rgba(255,255,255,0.85)" : showSky ? "rgba(255,255,255,0.80)" : showRed ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.42)" }}><MathText text={opt.text} imageBlock={false} /></span>
+                          <span className="relative z-[1] text-[11px] font-bold tabular-nums flex-shrink-0" style={{ color: pctColor }}>{pct}%</span>
+                          {showGreen && <Check className="relative z-[1] w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />}
+                          {showSky && <span className="relative z-[1] text-[10px] font-semibold text-sky-400 flex-shrink-0">ans</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             {/* CQ parts in exam result */}
             {r.q.type === "cq" && r.q.parts && r.q.parts.length > 0 && (
               <div className="ml-10 space-y-2">
