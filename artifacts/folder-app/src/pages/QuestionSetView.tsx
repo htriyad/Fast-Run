@@ -1131,8 +1131,8 @@ function ResultsGrid({
 }
 
 // ─── ExamResultsPage ───────────────────────────────────────────────────────────
-function ExamResults({ questions, examAnswers, onRetry, onBack }: {
-  questions: Question[]; examAnswers: Record<number, string>; onRetry: () => void; onBack: () => void;
+function ExamResults({ questions, examAnswers, onRetry, onBack, negativeMarking }: {
+  questions: Question[]; examAnswers: Record<number, string>; onRetry: () => void; onBack: () => void; negativeMarking?: boolean;
 }) {
   const [filter, setFilter] = useState<"all" | "correct" | "wrong" | "unanswered">("all");
   const results = questions.map((q, idx) => {
@@ -1145,6 +1145,9 @@ function ExamResults({ questions, examAnswers, onRetry, onBack }: {
   const totalWrong = results.filter(r => r.wrong).length;
   const totalUnanswered = results.filter(r => r.unanswered).length;
   const accuracy = questions.length > 0 ? Math.round((totalCorrect / questions.length) * 100) : 0;
+  const deduction = negativeMarking ? totalWrong * 0.25 : 0;
+  const netScore = totalCorrect - deduction;
+  const netScoreDisplay = Number.isInteger(netScore) ? String(netScore) : netScore.toFixed(2);
   const filtered = results.filter(r =>
     filter === "all" ? true : filter === "correct" ? r.correct : filter === "wrong" ? r.wrong : r.unanswered
   );
@@ -1160,6 +1163,21 @@ function ExamResults({ questions, examAnswers, onRetry, onBack }: {
           <h2 className="text-xl font-bold text-white/90">Exam Complete</h2>
           <p className="text-white/40 text-sm mt-1">Here's your result</p>
         </div>
+        {/* Net score bar (negative marking) */}
+        {negativeMarking && (
+          <div className="rounded-2xl bg-amber-500/8 border border-amber-500/20 px-4 py-3 flex items-center justify-between">
+            <div className="text-left">
+              <div className="text-xs font-semibold text-amber-400/60 uppercase tracking-wider">Net Score</div>
+              <div className={`text-3xl font-extrabold tabular-nums mt-0.5 ${netScore < 0 ? "text-red-400" : "text-amber-300"}`}>{netScoreDisplay}</div>
+              <div className="text-[11px] text-white/30 mt-0.5">out of {questions.length}</div>
+            </div>
+            <div className="text-right space-y-1">
+              <div className="text-xs text-emerald-400">+{totalCorrect} correct</div>
+              {deduction > 0 && <div className="text-xs text-red-400">−{deduction.toFixed(2)} deducted</div>}
+              <div className="text-xs text-white/25">(−0.25 per wrong)</div>
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-4 gap-3">
           <div className="rounded-2xl bg-white/5 border border-white/8 p-3"><div className="text-2xl font-bold text-white/80">{questions.length}</div><div className="text-xs text-white/30 mt-1">Total</div></div>
           <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-3"><div className="text-2xl font-bold text-emerald-400">{totalCorrect}</div><div className="text-xs text-emerald-400/50 mt-1">Correct</div></div>
@@ -1351,6 +1369,7 @@ export function QuestionSetView() {
   const [examAnswers, setExamAnswers] = useState<Record<number, string>>({});
   const [examSubmitted, setExamSubmitted] = useState(false);
   const [examStarted, setExamStarted] = useState(false);
+  const [negativeMarking, setNegativeMarking] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState<number | null>(null);
   const [showExamGrid, setShowExamGrid] = useState(false);
   const [examCurrentIdx, setExamCurrentIdx] = useState(0);
@@ -1643,7 +1662,7 @@ export function QuestionSetView() {
           <button onClick={() => { setMode(null); setExamSubmitted(false); setExamAnswers({}); }} className="w-8 h-8 rounded-xl bg-white/6 hover:bg-white/10 flex items-center justify-center"><ChevronLeft className="w-4 h-4 text-white/60" /></button>
           <span className="font-bold text-white/80 flex-1 truncate">Exam Results — {set.name}</span>
         </div>
-        <ExamResults questions={visible} examAnswers={examAnswers}
+        <ExamResults questions={visible} examAnswers={examAnswers} negativeMarking={negativeMarking}
           onRetry={() => { setExamAnswers({}); setExamSubmitted(false); setExamStarted(false); setSelectedDuration(null); }}
           onBack={() => { setMode(null); setExamSubmitted(false); setExamAnswers({}); }} />
       </>
@@ -1721,6 +1740,23 @@ export function QuestionSetView() {
             onClick={() => setSelectedDuration(null)}
             className={`w-full py-2.5 rounded-xl text-xs font-semibold border transition-all ${selectedDuration === null ? "bg-white/10 border-white/25 text-white/70" : "border-white/8 text-white/25 hover:border-white/15"}`}>
             No Timer
+          </button>
+
+          {/* Negative marking toggle */}
+          <button
+            onClick={() => setNegativeMarking(v => !v)}
+            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${negativeMarking ? "bg-red-500/12 border-red-500/35 text-red-300" : "bg-white/4 border-white/10 text-white/40 hover:border-white/18"}`}>
+            <div className="flex items-center gap-2.5">
+              <div className={`w-4 h-4 rounded flex items-center justify-center text-[10px] font-black flex-shrink-0 ${negativeMarking ? "bg-red-500/25 text-red-300" : "bg-white/8 text-white/30"}`}>−</div>
+              <div className="text-left">
+                <div className="text-xs font-semibold leading-tight">Negative Marking</div>
+                <div className={`text-[11px] leading-tight mt-0.5 ${negativeMarking ? "text-red-400/60" : "text-white/25"}`}>−0.25 per wrong answer</div>
+              </div>
+            </div>
+            {/* Toggle pill */}
+            <div className={`w-9 h-5 rounded-full border transition-all flex items-center px-0.5 flex-shrink-0 ${negativeMarking ? "bg-red-500/30 border-red-500/40 justify-end" : "bg-white/6 border-white/12 justify-start"}`}>
+              <div className={`w-4 h-4 rounded-full transition-all ${negativeMarking ? "bg-red-400" : "bg-white/30"}`} />
+            </div>
           </button>
 
           <Button
