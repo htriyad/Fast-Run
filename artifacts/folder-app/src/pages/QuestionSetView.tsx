@@ -499,37 +499,43 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
             {q.options.map(opt => renderMCQOption(opt))}
           </div>
         )}
-        {/* Option percentage pills — always shown when data exists */}
-        {q.type === "mcq" && !renderAsNoOptions && q.options && q.options.length > 0 && (() => {
+        {/* Option percentage stats — only after user answers in this session */}
+        {q.type === "mcq" && !renderAsNoOptions && q.options && q.options.length > 0 &&
+          (practiceSelected != null || examSelected != null || examSubmitted || mode === "solution") && (() => {
           const total = Object.values(qStats).reduce((a, b) => a + b, 0);
-          return total > 0 ? (
-            <div className="ml-10 flex flex-wrap gap-1.5 pt-0.5">
+          if (total === 0) return null;
+          const userPick = (practiceSelected ?? examSelected)?.toUpperCase();
+          return (
+            <div className="ml-10 mt-2 space-y-1.5">
               {q.options.map(opt => {
                 const count = qStats[opt.letter] ?? 0;
                 const pct = Math.round((count / total) * 100);
                 const isCorrect = !!q.answer && opt.letter.toUpperCase() === q.answer.toUpperCase();
+                const isUserPick = userPick === opt.letter.toUpperCase();
                 return (
-                  <div key={opt.letter} className="flex items-center gap-1 px-2 py-1 rounded-lg"
-                    style={{
-                      background: isCorrect ? "rgba(34,197,94,0.12)" : "rgba(255,255,255,0.05)",
-                      border: `1px solid ${isCorrect ? "rgba(34,197,94,0.25)" : "rgba(255,255,255,0.08)"}`,
-                    }}>
-                    <span className="w-4 h-4 rounded-[5px] flex items-center justify-center text-[10px] font-bold"
-                      style={{ background: isCorrect ? "#22c55e" : "rgba(255,255,255,0.12)", color: isCorrect ? "#000" : "rgba(255,255,255,0.6)" }}>
+                  <div key={opt.letter} className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold w-4 text-center flex-shrink-0"
+                      style={{ color: isCorrect ? "#4ade80" : isUserPick ? "rgba(239,68,68,0.85)" : "rgba(255,255,255,0.28)" }}>
                       {opt.letter}
                     </span>
-                    <span className="text-[11px] font-semibold" style={{ color: isCorrect ? "#4ade80" : "rgba(255,255,255,0.45)" }}>{pct}%</span>
+                    <div className="flex-1 relative h-[22px] rounded-lg overflow-hidden"
+                      style={{ background: "rgba(255,255,255,0.05)" }}>
+                      <div className="absolute inset-y-0 left-0 rounded-lg transition-all duration-700"
+                        style={{
+                          width: `${pct}%`,
+                          background: isCorrect ? "rgba(34,197,94,0.28)" : isUserPick ? "rgba(239,68,68,0.2)" : "rgba(255,255,255,0.07)",
+                        }} />
+                      <span className="absolute inset-0 flex items-center px-2.5 text-[11px] font-bold tabular-nums"
+                        style={{ color: isCorrect ? "#4ade80" : isUserPick ? "rgba(239,68,68,0.85)" : "rgba(255,255,255,0.38)" }}>
+                        {pct}%
+                      </span>
+                    </div>
                   </div>
                 );
               })}
             </div>
-          ) : null;
+          );
         })()}
-
-        {/* Practice hint */}
-        {isPractice && q.type === "mcq" && !renderAsNoOptions && !practiceSelected && (
-          <p className="ml-10 text-xs text-white/20 italic">tap an option to check your answer</p>
-        )}
 
 
         {/* SQ / no-options: show answer */}
@@ -1303,6 +1309,8 @@ export function QuestionSetView() {
   const [examStarted, setExamStarted] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState<number | null>(null);
   const [showExamGrid, setShowExamGrid] = useState(false);
+  const [examCurrentIdx, setExamCurrentIdx] = useState(0);
+  const [examAutoScroll, setExamAutoScroll] = useState(false);
 
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -1372,6 +1380,12 @@ export function QuestionSetView() {
     setTimeout(() => cardRefs.current[clamped]?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
   }, [visible.length]);
 
+  const navigateExam = useCallback((idx: number) => {
+    const clamped = Math.max(0, Math.min(idx, visible.length - 1));
+    setExamCurrentIdx(clamped);
+    setTimeout(() => cardRefs.current[clamped]?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
+  }, [visible.length]);
+
   const handlePracticeSelect = useCallback((questionId: number, letter: string) => {
     setPracticeAnswers(prev => ({ ...prev, [questionId]: letter }));
     setPracticeRevealedId(questionId);
@@ -1388,6 +1402,21 @@ export function QuestionSetView() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, practiceAnswers, autoScroll]);
+
+  const handleExamSelect = useCallback((questionId: number, letter: string) => {
+    setExamAnswers(prev => ({ ...prev, [questionId]: letter }));
+    if (examAutoScroll) {
+      setTimeout(() => {
+        setExamCurrentIdx(prev => {
+          const nextIdx = visible.findIndex((q, i) => i > prev && !examAnswers[q.id] && q.id !== questionId);
+          const advance = nextIdx !== -1 ? nextIdx : prev + 1 < visible.length ? prev + 1 : prev;
+          cardRefs.current[advance]?.scrollIntoView({ behavior: "smooth", block: "center" });
+          return advance;
+        });
+      }, 700);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, examAnswers, examAutoScroll]);
 
   const { formatted: timerFormatted } = useExamTimer(
     mode === "exam" && examStarted && !examSubmitted ? selectedDuration : null,
@@ -1665,7 +1694,7 @@ export function QuestionSetView() {
       </div>
 
       {/* ── Question list ── */}
-      <div className={`flex-1 max-w-3xl mx-auto w-full px-4 md:px-8 space-y-3 pt-16 ${isPractice ? "pb-40" : "pb-28"}`}>
+      <div className={`flex-1 max-w-3xl mx-auto w-full px-4 md:px-8 space-y-3 pt-16 ${isPractice || (isExam && !examSubmitted) ? "pb-40" : "pb-28"}`}>
         {visible.map((q, idx) => (
           <LazyCard
             key={q.id}
@@ -1681,7 +1710,7 @@ export function QuestionSetView() {
             onPracticeSelect={isPractice ? (letter) => handlePracticeSelect(q.id, letter) : undefined}
             examSelected={isExam ? (examAnswers[q.id] ?? null) : undefined}
             examSubmitted={isExam ? examSubmitted : undefined}
-            onExamSelect={isExam ? (letter) => setExamAnswers(prev => ({ ...prev, [q.id]: letter })) : undefined}
+            onExamSelect={isExam ? (letter) => handleExamSelect(q.id, letter) : undefined}
             cardRef={(el) => { cardRefs.current[idx] = el; }}
             selectMode={isSolution ? selectMode : undefined}
             selected={isSolution ? selectedIds.has(q.id) : undefined}
@@ -1766,10 +1795,47 @@ export function QuestionSetView() {
         </div>
       )}
 
+      {/* ── Exam footer navigation ── */}
+      {isExam && !examSubmitted && (
+        <div className="fixed bottom-0 left-0 right-0 z-20 bg-background/95 backdrop-blur-md border-t border-white/8">
+          <div className="max-w-3xl mx-auto px-4 py-2 flex items-center justify-between gap-4">
+            <button
+              onClick={() => navigateExam(examCurrentIdx - 1)}
+              disabled={examCurrentIdx === 0}
+              className="w-10 h-10 rounded-xl bg-white/6 border border-white/10 flex items-center justify-center transition-all hover:bg-white/12 active:scale-95 disabled:opacity-25 disabled:cursor-not-allowed">
+              <ChevronLeft className="w-5 h-5 text-white/70" />
+            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-white/80 tabular-nums">Q {examCurrentIdx + 1}</span>
+              <span className="text-xs text-white/20">/</span>
+              <span className="text-xs text-white/40 tabular-nums">{visible.length}</span>
+              {examAnswers[visible[examCurrentIdx]?.id] != null && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400">✓</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setExamAutoScroll(v => !v)}
+                title={examAutoScroll ? "Auto-scroll: ON" : "Auto-scroll: OFF"}
+                className={`flex items-center gap-1 rounded-xl text-xs font-semibold border transition-all ${examAutoScroll ? "px-2.5 py-1.5 bg-amber-500/20 border-amber-500/40 text-amber-300" : "w-10 h-10 justify-center bg-white/5 border-white/10 text-white/30 hover:text-white/50"}`}>
+                <Zap className="w-3.5 h-3.5" />
+                {examAutoScroll && <span>Auto</span>}
+              </button>
+              <button
+                onClick={() => navigateExam(examCurrentIdx + 1)}
+                disabled={examCurrentIdx >= visible.length - 1}
+                className="w-10 h-10 rounded-xl bg-white/6 border border-white/10 flex items-center justify-center transition-all hover:bg-white/12 active:scale-95 disabled:opacity-25 disabled:cursor-not-allowed">
+                <ChevronRight className="w-5 h-5 text-white/70" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Floating button (Practice & Exam) ── */}
       {(isPractice || isExam) && !examSubmitted && (
         <button onClick={() => isPractice ? setShowResults(true) : setShowExamGrid(true)}
-          className={`fixed z-30 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 right-4 ${isPractice ? "bottom-24" : "bottom-6"}`}
+          className="fixed z-30 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 right-4 bottom-24"
           style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 8px 32px rgba(99,102,241,0.4)" }}>
           <List className="w-6 h-6 text-white" />
         </button>
@@ -1813,7 +1879,7 @@ export function QuestionSetView() {
 
       {addOpen && <AddQuestionDialog setId={setId} onAdded={handleAdded} onClose={() => setAddOpen(false)} />}
       {copyDialogOpen && (
-        <CopyToSetDialog
+        <CopyToFolderBrowser
           currentSetId={setId}
           selectedQuestionIds={[...selectedIds]}
           onClose={() => setCopyDialogOpen(false)}
