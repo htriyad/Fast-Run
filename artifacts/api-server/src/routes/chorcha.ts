@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, questionSetsTable, questionsTable, foldersTable } from "@workspace/db";
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, inArray, and } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -893,6 +893,43 @@ router.post("/decode-to-folder", async (req, res) => {
   }
 
   return res.status(201).json(questionSet);
+});
+
+// ─── Mock Exam: generate random questions from selected sets ──────────────────
+router.post("/mock-exam/generate", async (req, res) => {
+  const rawSetIds = req.body?.setIds;
+  const count = typeof req.body?.count === "number" ? Math.max(1, Math.min(200, req.body.count)) : 25;
+  const shuffle = req.body?.shuffle !== false;
+  const types: string[] = Array.isArray(req.body?.types) ? req.body.types : [];
+
+  if (!Array.isArray(rawSetIds) || rawSetIds.length === 0) {
+    return res.status(400).json({ error: "setIds is required and must be a non-empty array." });
+  }
+  const setIds: number[] = (rawSetIds as unknown[]).map((id) => parseInt(String(id), 10)).filter((id) => Number.isFinite(id) && id > 0);
+  if (setIds.length === 0) return res.status(400).json({ error: "No valid set IDs provided." });
+
+  const allQuestions = await db.select().from(questionsTable).where(
+    and(
+      inArray(questionsTable.setId, setIds),
+      eq(questionsTable.hidden, false),
+      types.length > 0 ? inArray(questionsTable.type, types) : undefined,
+    )
+  );
+
+  if (allQuestions.length === 0) {
+    return res.status(200).json({ questions: [], total: 0, fromSets: setIds.length });
+  }
+
+  const pool = [...allQuestions];
+  if (shuffle) {
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+  }
+  const selected = pool.slice(0, count);
+
+  return res.json({ questions: selected, total: allQuestions.length, fromSets: setIds.length });
 });
 
 export default router;

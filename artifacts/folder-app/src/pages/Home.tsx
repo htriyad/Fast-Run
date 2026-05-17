@@ -13,11 +13,12 @@ import { MoveFolderDialog } from "@/components/folder/MoveFolderDialog";
 import { QuestionIdSearch } from "@/components/QuestionIdSearch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, FolderIcon, GripVertical, Check, Layers, Hash } from "lucide-react";
+import { Search, Plus, FolderIcon, GripVertical, Check, Layers, Hash, Zap, ChevronRight } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useTheme } from "@/lib/theme";
 import { AnimatePresence, motion } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
+import { Link } from "wouter";
 
 const containerVariants = {
   hidden: {},
@@ -176,6 +177,49 @@ export function Home() {
           </motion.div>
         )}
       </header>
+
+      {/* Mock Exam Banner */}
+      {!reorderMode && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+        >
+          <Link href="/mock-exam">
+            <div className="group relative overflow-hidden rounded-2xl border cursor-pointer transition-all duration-300 hover:scale-[1.01]"
+              style={{
+                background: "linear-gradient(135deg, rgba(245,158,11,0.10) 0%, rgba(239,68,68,0.08) 50%, rgba(139,92,246,0.12) 100%)",
+                borderColor: "rgba(245,158,11,0.22)",
+                boxShadow: "0 4px 24px rgba(245,158,11,0.08)",
+              }}
+            >
+              {/* Hover glow */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.08), rgba(139,92,246,0.08))" }} />
+              <div className="absolute top-0 inset-x-0 h-px"
+                style={{ background: "linear-gradient(90deg, transparent, rgba(245,158,11,0.5), rgba(139,92,246,0.4), transparent)" }} />
+
+              <div className="relative z-10 flex items-center gap-4 px-5 py-4">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.25), rgba(239,68,68,0.20))", boxShadow: "0 0 16px rgba(245,158,11,0.20)" }}>
+                  <Zap className="w-5 h-5 text-amber-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-white/90 text-sm">Mock Exam</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                      style={{ background: "rgba(245,158,11,0.15)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.25)" }}>
+                      New
+                    </span>
+                  </div>
+                  <p className="text-xs text-white/40 mt-0.5">Generate a timed MCQ exam from your question bank</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-white/25 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all duration-200 flex-shrink-0" />
+              </div>
+            </div>
+          </Link>
+        </motion.div>
+      )}
 
       {/* Grid */}
       {isLoading ? (

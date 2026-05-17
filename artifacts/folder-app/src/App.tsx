@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import { Home } from "@/pages/Home";
 import { FolderView } from "@/pages/FolderView";
 import { QuestionSetView } from "@/pages/QuestionSetView";
+import { MockExam } from "@/pages/MockExam";
 import { ThemeProvider } from "@/lib/theme";
 
 export { useTheme, ThemeContext } from "@/lib/theme";
@@ -23,6 +24,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/mock-exam" component={MockExam} />
       <Route path="/folders/:id" component={FolderView} />
       <Route path="/sets/:id" component={QuestionSetView} />
       <Route component={NotFound} />
