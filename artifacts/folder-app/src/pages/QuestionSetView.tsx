@@ -1493,6 +1493,11 @@ export function QuestionSetView() {
   const [showResults, setShowResults] = useState(false);
   const [autoScroll, setAutoScroll] = useState(false);
 
+  // Refs so memoized cards always call the latest handler (avoids stale-closure bug
+  // caused by QuestionCardMemo skipping onPracticeSelect / onExamSelect in its areEqual)
+  const practiceSelectRef = useRef<((questionId: number, letter: string) => void) | null>(null);
+  const examSelectRef = useRef<((questionId: number, letter: string) => void) | null>(null);
+
   // Exam
   const [examAnswers, setExamAnswers] = useState<Record<number, string>>({});
   const [examSubmitted, setExamSubmitted] = useState(false);
@@ -1630,6 +1635,10 @@ export function QuestionSetView() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, practiceAnswers, autoScroll]);
 
+  // Keep ref in sync with latest handler so stable wrappers below always call
+  // the current version (fixes stale-closure bug with QuestionCardMemo areEqual).
+  practiceSelectRef.current = handlePracticeSelect;
+
   const handleExamSelect = useCallback((questionId: number, letter: string) => {
     setExamAnswers(prev => ({ ...prev, [questionId]: letter }));
     if (examAutoScroll) {
@@ -1644,6 +1653,20 @@ export function QuestionSetView() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, examAnswers, examAutoScroll]);
+
+  examSelectRef.current = handleExamSelect;
+
+  // Stable wrappers — identity never changes, so QuestionCardMemo never re-renders
+  // just because the handler was recreated, but the call always reaches the latest closure.
+  const stablePracticeSelect = useCallback((questionId: number, letter: string) => {
+    practiceSelectRef.current?.(questionId, letter);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const stableExamSelect = useCallback((questionId: number, letter: string) => {
+    examSelectRef.current?.(questionId, letter);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Keyboard shortcuts: A/B/C/D select MCQ option, ←/→ navigate between questions
   useEffect(() => {
@@ -2074,10 +2097,10 @@ export function QuestionSetView() {
             mode={isSolution ? "solution" : isPractice ? "practice" : "exam"}
             practiceSelected={isPractice ? (practiceAnswers[q.id] ?? null) : undefined}
             practiceRevealed={isPractice ? (practiceAnswers[q.id] != null) : undefined}
-            onPracticeSelect={isPractice ? (letter) => handlePracticeSelect(q.id, letter) : undefined}
+            onPracticeSelect={isPractice ? (letter) => stablePracticeSelect(q.id, letter) : undefined}
             examSelected={isExam ? (examAnswers[q.id] ?? null) : undefined}
             examSubmitted={isExam ? examSubmitted : undefined}
-            onExamSelect={isExam ? (letter) => handleExamSelect(q.id, letter) : undefined}
+            onExamSelect={isExam ? (letter) => stableExamSelect(q.id, letter) : undefined}
             cardRef={(el) => { cardRefs.current[idx] = el; }}
             onImageZoom={setZoomedImg}
             selectMode={isSolution ? selectMode : undefined}
