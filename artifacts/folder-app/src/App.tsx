@@ -9,6 +9,12 @@ import { QuestionSetView } from "@/pages/QuestionSetView";
 import { MockExam } from "@/pages/MockExam";
 import { Bookmarks } from "@/pages/Bookmarks";
 import { WeakQuestions } from "@/pages/WeakQuestions";
+import Dashboard from "@/pages/Dashboard";
+import Folders from "@/pages/Folders";
+import FolderDetail from "@/pages/FolderDetail";
+import SetDetail from "@/pages/SetDetail";
+import ImportPage from "@/pages/ImportPage";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { ThemeProvider } from "@/lib/theme";
 
 export { useTheme, ThemeContext } from "@/lib/theme";
@@ -25,12 +31,31 @@ const queryClient = new QueryClient({
 function Router() {
   return (
     <Switch>
+      {/* Full-page views (own layout) */}
       <Route path="/" component={Home} />
       <Route path="/mock-exam" component={MockExam} />
       <Route path="/bookmarks" component={Bookmarks} />
       <Route path="/weak-questions" component={WeakQuestions} />
       <Route path="/folders/:id" component={FolderView} />
       <Route path="/sets/:id" component={QuestionSetView} />
+
+      {/* Management views (sidebar layout) */}
+      <Route path="/dashboard">
+        <AppLayout><Dashboard /></AppLayout>
+      </Route>
+      <Route path="/manage/folders">
+        <AppLayout><Folders /></AppLayout>
+      </Route>
+      <Route path="/manage/folders/:id">
+        <AppLayout><FolderDetail /></AppLayout>
+      </Route>
+      <Route path="/manage/sets/:id">
+        <AppLayout><SetDetail /></AppLayout>
+      </Route>
+      <Route path="/import">
+        <AppLayout><ImportPage /></AppLayout>
+      </Route>
+
       <Route component={NotFound} />
     </Switch>
   );
