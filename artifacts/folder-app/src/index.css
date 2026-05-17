@@ -56,40 +56,44 @@
 }
 
 /* ═══════════════════════════════════════════
-   DARK MODE (default / .dark class) — Cosmic Command Center
+   DARK MODE
 ═══════════════════════════════════════════ */
 :root {
   color-scheme: dark;
-  --background: 220 20% 4%;
-  --foreground: 210 20% 98%;
-  --border: 220 15% 12%;
-  --card: 220 20% 6%;
-  --card-foreground: 210 20% 98%;
-  --card-border: 220 15% 12%;
-  --sidebar: 220 20% 6%;
-  --sidebar-foreground: 210 20% 98%;
-  --sidebar-border: 220 15% 12%;
-  --sidebar-primary: 250 100% 65%;
+  --button-outline: rgba(255,255,255,.08);
+  --badge-outline: rgba(255,255,255,.05);
+  --elevate-1: rgba(255,255,255,.03);
+  --elevate-2: rgba(255,255,255,.06);
+  --background: 222 22% 6%;
+  --foreground: 210 15% 95%;
+  --border: 220 16% 11%;
+  --card: 222 20% 8%;
+  --card-foreground: 210 15% 95%;
+  --card-border: 220 16% 12%;
+  --sidebar: 222 20% 8%;
+  --sidebar-foreground: 210 15% 95%;
+  --sidebar-border: 220 16% 12%;
+  --sidebar-primary: 252 80% 65%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 220 15% 12%;
-  --sidebar-accent-foreground: 210 20% 98%;
-  --sidebar-ring: 220 15% 12%;
-  --popover: 220 20% 6%;
-  --popover-foreground: 210 20% 98%;
-  --popover-border: 220 15% 12%;
-  --primary: 250 100% 65%;
+  --sidebar-accent: 220 16% 12%;
+  --sidebar-accent-foreground: 210 15% 95%;
+  --sidebar-ring: 220 16% 14%;
+  --popover: 222 20% 8%;
+  --popover-foreground: 210 15% 95%;
+  --popover-border: 220 16% 12%;
+  --primary: 252 80% 65%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 220 15% 12%;
-  --secondary-foreground: 210 20% 98%;
-  --muted: 220 15% 12%;
-  --muted-foreground: 220 10% 60%;
-  --accent: 220 15% 16%;
-  --accent-foreground: 210 20% 98%;
+  --secondary: 220 16% 12%;
+  --secondary-foreground: 210 15% 95%;
+  --muted: 220 16% 12%;
+  --muted-foreground: 220 10% 52%;
+  --accent: 220 16% 15%;
+  --accent-foreground: 210 15% 95%;
   --destructive: 0 84% 60%;
-  --destructive-foreground: 210 20% 98%;
-  --input: 220 15% 12%;
-  --ring: 250 100% 65%;
-  --chart-1: 250 100% 65%;
+  --destructive-foreground: 0 0% 98%;
+  --input: 220 16% 12%;
+  --ring: 220 16% 20%;
+  --chart-1: 252 80% 65%;
   --chart-2: 320 80% 65%;
   --chart-3: 160 80% 65%;
   --chart-4: 40 80% 65%;
@@ -97,96 +101,156 @@
   --app-font-sans: 'Inter', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: Menlo, monospace;
-  --radius: 0.75rem;
+  --radius: 0.875rem;
+  --sidebar-primary-border: hsl(var(--sidebar-primary));
+  --sidebar-accent-border: hsl(var(--sidebar-accent));
+  --primary-border: hsl(var(--primary));
+  --secondary-border: hsl(var(--secondary));
+  --muted-border: hsl(var(--muted));
+  --accent-border: hsl(var(--accent));
+  --destructive-border: hsl(var(--destructive));
 }
 
 /* ═══════════════════════════════════════════
-   LIGHT MODE — Premium Slate/Mac-like
+   LIGHT MODE — crisp, professional slate
 ═══════════════════════════════════════════ */
 html.light {
   color-scheme: light;
-  --background: 210 30% 98%;
-  --foreground: 220 40% 10%;
-  --border: 214 20% 88%;
+  --background: 220 20% 97%;
+  --foreground: 222 30% 10%;
+  --border: 220 16% 88%;
   --card: 0 0% 100%;
-  --card-foreground: 220 40% 10%;
-  --card-border: 214 20% 88%;
-  --sidebar: 210 30% 96%;
-  --sidebar-foreground: 220 40% 10%;
-  --sidebar-border: 214 20% 88%;
-  --sidebar-primary: 220 90% 50%;
+  --card-foreground: 222 30% 10%;
+  --card-border: 220 16% 88%;
+  --sidebar: 220 18% 96%;
+  --sidebar-foreground: 222 30% 10%;
+  --sidebar-border: 220 16% 88%;
+  --sidebar-primary: 252 65% 52%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 214 20% 90%;
-  --sidebar-accent-foreground: 220 40% 10%;
-  --sidebar-ring: 214 20% 80%;
+  --sidebar-accent: 220 16% 91%;
+  --sidebar-accent-foreground: 222 30% 10%;
+  --sidebar-ring: 220 16% 80%;
   --popover: 0 0% 100%;
-  --popover-foreground: 220 40% 10%;
-  --popover-border: 214 20% 88%;
-  --primary: 220 90% 50%;
+  --popover-foreground: 222 30% 10%;
+  --popover-border: 220 16% 88%;
+  --primary: 252 65% 52%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 214 20% 92%;
-  --secondary-foreground: 220 40% 10%;
-  --muted: 214 20% 94%;
-  --muted-foreground: 215 15% 45%;
-  --accent: 214 20% 92%;
-  --accent-foreground: 220 40% 10%;
-  --destructive: 0 70% 50%;
+  --secondary: 220 16% 92%;
+  --secondary-foreground: 222 30% 10%;
+  --muted: 220 16% 93%;
+  --muted-foreground: 220 12% 45%;
+  --accent: 220 16% 91%;
+  --accent-foreground: 222 30% 10%;
+  --destructive: 0 70% 48%;
   --destructive-foreground: 0 0% 100%;
-  --input: 214 20% 88%;
-  --ring: 220 90% 50%;
-  --chart-1: 220 90% 50%;
+  --input: 220 16% 88%;
+  --ring: 220 16% 72%;
+  --chart-1: 252 65% 52%;
   --chart-2: 320 65% 44%;
   --chart-3: 160 65% 32%;
   --chart-4: 38 75% 38%;
   --chart-5: 200 65% 40%;
+  --button-outline: rgba(0,0,0,.10);
+  --badge-outline: rgba(0,0,0,.06);
+  --elevate-1: rgba(0,0,0,.02);
+  --elevate-2: rgba(0,0,0,.04);
 }
 
+/* ── Light mode: white-* text → slate ink ── */
+html.light [class*="text-white\/1"],
+html.light [class*="text-white\/2"],
+html.light [class*="text-white\/3"] { color: rgba(30,41,59,0.32) !important; }
+html.light [class*="text-white\/4"],
+html.light [class*="text-white\/5"] { color: rgba(30,41,59,0.50) !important; }
+html.light [class*="text-white\/6"],
+html.light [class*="text-white\/7"] { color: rgba(30,41,59,0.68) !important; }
+html.light [class*="text-white\/8"],
+html.light [class*="text-white\/9"],
+html.light .text-white,
+html.light [class*="text-white"] { color: rgba(15,23,42,0.88) !important; }
+
+/* ── Light mode: white borders → slate ── */
+html.light [class*="border-white\/1"],
+html.light [class*="border-white\/2"] { border-color: rgba(30,41,59,0.07) !important; }
+html.light [class*="border-white\/5"],
+html.light [class*="border-white\/6"],
+html.light [class*="border-white\/7"],
+html.light [class*="border-white\/8"],
+html.light [class*="border-white"] { border-color: rgba(30,41,59,0.12) !important; }
+
+/* ── Light mode: white bg tints → slate tints ── */
+html.light [class*="bg-white\/1"],
+html.light [class*="bg-white\/2"],
+html.light [class*="bg-white\/3"],
+html.light [class*="bg-white\/4"],
+html.light [class*="bg-white\/5"],
+html.light [class*="bg-white\/6"],
+html.light [class*="bg-white\/7"],
+html.light [class*="bg-white\/8"] { background-color: rgba(30,41,59,0.04) !important; }
+
+/* ── Light mode: placeholders ── */
+html.light input::placeholder,
+html.light textarea::placeholder { color: rgba(30,41,59,0.36) !important; }
+
+/* ── Light mode: fixed header bar ── */
+html.light .bg-background\/95 {
+  background: rgba(236,240,248,0.97) !important;
+  border-bottom-color: rgba(30,41,59,0.10) !important;
+  box-shadow: 0 1px 12px rgba(30,41,59,0.06) !important;
+}
+
+/* ── Light mode: scrollbar ── */
+html.light ::-webkit-scrollbar-track { background: hsl(220,18%,93%); }
+html.light ::-webkit-scrollbar-thumb { background: rgba(30,41,59,0.18); border-radius: 99px; }
+
+/* ═══════════════════════════════════════════
+   BASE
+═══════════════════════════════════════════ */
 @layer base {
   * { @apply border-border; }
   body { @apply font-sans antialiased bg-background text-foreground; }
 }
 
-/* ── Dark mode background ── */
+/* ── Dark background ── */
 html.dark body, body {
-  background: radial-gradient(circle at 50% 0%, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 1) 100%), hsl(var(--background));
+  background:
+    radial-gradient(ellipse 80% 40% at 50% -2%, rgba(99,102,241,0.07) 0%, transparent 60%),
+    hsl(var(--background));
   min-height: 100dvh;
 }
 
-/* ── Light mode background ── */
+/* ── Light background ── */
 html.light body {
-  background: radial-gradient(circle at 50% 0%, #ffffff, #f1f5f9 100%);
+  background:
+    radial-gradient(ellipse 80% 40% at 50% -2%, rgba(99,102,241,0.06) 0%, transparent 55%),
+    hsl(var(--background));
   min-height: 100dvh;
 }
 
 /* ═══════════════════════════════════════════
-   QUESTION CARD — Professional Slate
+   QUESTION CARD
 ═══════════════════════════════════════════ */
 .chorcha-question-card {
-  transition: all 0.2s ease;
-  border-radius: var(--radius-lg);
+  transition: background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-/* Dark mode */
 html.dark .chorcha-question-card,
 .chorcha-question-card {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.06);
 }
 
-/* Light mode */
 html.light .chorcha-question-card {
   background: #ffffff !important;
   border: 1px solid #e2e8f0 !important;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04), 0 8px 30px rgba(15, 23, 42, 0.02) !important;
+  box-shadow: 0 1px 4px rgba(15,23,42,0.05), 0 4px 16px rgba(15,23,42,0.04) !important;
   color: #0f172a !important;
 }
 
-/* Light mode overrides for internal elements */
 html.light .chorcha-q-body {
   font-family: var(--app-font-sans) !important;
-  font-size: 0.95rem !important;
-  line-height: 1.6 !important;
+  font-size: 0.9375rem !important;
+  line-height: 1.7 !important;
   color: #1e293b !important;
 }
 
@@ -199,7 +263,6 @@ html.light .chorcha-q-body em {
   font-family: inherit !important;
 }
 
-html.light .chorcha-question-card [class*="text-white"] { color: #334155 !important; }
 html.light .chorcha-question-card [class*="text-white\/2"],
 html.light .chorcha-question-card [class*="text-white\/3"] { color: #94a3b8 !important; }
 html.light .chorcha-question-card [class*="text-white\/4"],
@@ -208,33 +271,27 @@ html.light .chorcha-question-card [class*="text-white\/6"],
 html.light .chorcha-question-card [class*="text-white\/7"] { color: #475569 !important; }
 html.light .chorcha-question-card [class*="text-white\/8"],
 html.light .chorcha-question-card [class*="text-white\/9"],
-html.light .chorcha-question-card .text-white { color: #0f172a !important; }
+html.light .chorcha-question-card .text-white,
+html.light .chorcha-question-card [class*="text-white"] { color: #0f172a !important; }
 
-html.light .chorcha-question-card [class*="border-white"] { border-color: #cbd5e1 !important; }
+html.light .chorcha-question-card [class*="border-white"] { border-color: #e2e8f0 !important; }
 html.light .chorcha-question-card [class*="bg-white\/"] { background-color: #f8fafc !important; }
 
-html.light .chorcha-question-card .bg-sky-500\/6 { background: #f0f9ff !important; border-color: #e0f2fe !important; }
-html.light .chorcha-question-card .bg-purple-500\/5 { background: #faf5ff !important; border-color: #f3e8ff !important; }
-html.light .chorcha-question-card .bg-amber-500\/5 { background: #fffbeb !important; border-color: #fef3c7 !important; }
+html.light .chorcha-question-card .bg-sky-500\/6 { background: #f0f9ff !important; }
+html.light .chorcha-question-card .bg-purple-500\/5 { background: #faf5ff !important; }
+html.light .chorcha-question-card .bg-amber-500\/5 { background: #fffbeb !important; }
+html.light .chorcha-question-card .bg-sky-500\/5 { background: #f0f9ff !important; }
 
 html.light .chorcha-question-card input::placeholder,
 html.light .chorcha-question-card textarea::placeholder { color: #94a3b8 !important; }
 
-/* TABLE STYLES */
-.chorcha-table table {
-  border-collapse: collapse;
-  width: 100%;
-  font-size: 0.875rem;
-}
-.chorcha-table td, .chorcha-table th {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 8px 12px;
-  text-align: left;
-}
-.chorcha-table th { background: rgba(255, 255, 255, 0.05); font-weight: 600; }
-.chorcha-table tr:nth-child(even) { background: rgba(255, 255, 255, 0.02); }
-
-html.light .chorcha-table td,
-html.light .chorcha-table th { border-color: #e2e8f0; }
-html.light .chorcha-table th { background: #f8fafc; color: #334155; }
+/* ═══════════════════════════════════════════
+   TABLE
+═══════════════════════════════════════════ */
+.chorcha-table table { border-collapse: collapse; width: 100%; font-size: 0.875rem; color: inherit; }
+.chorcha-table td, .chorcha-table th { border: 1px solid rgba(255,255,255,0.12); padding: 4px 10px; text-align: left; vertical-align: top; }
+.chorcha-table th { background: rgba(255,255,255,0.05); font-weight: 600; }
+.chorcha-table tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+html.light .chorcha-table td, html.light .chorcha-table th { border-color: #e2e8f0; }
+html.light .chorcha-table th { background: #f8fafc; }
 html.light .chorcha-table tr:nth-child(even) { background: #f8fafc; }

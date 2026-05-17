@@ -18,7 +18,11 @@ import { MoveFolderDialog } from "@/components/folder/MoveFolderDialog";
 import { DecodeDialog } from "@/components/folder/DecodeDialog";
 import { QuestionSetCard } from "@/components/folder/QuestionSetCard";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Home as HomeIcon, Plus, FolderIcon, GripVertical, Check, Pencil, Trash2, BookOpen, BookMarked, Loader2, X, Settings } from "lucide-react";
+import {
+  ChevronRight, Home as HomeIcon, Plus, FolderIcon,
+  GripVertical, Check, BookOpen, BookMarked,
+  Loader2, Settings,
+} from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatePresence, motion } from "framer-motion";
@@ -62,7 +66,8 @@ export function FolderView() {
     setNewSetSaving(true);
     try {
       const res = await fetch(`${import.meta.env.BASE_URL}api/folders/${folderId}/sets`, {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, examType: newSetType.trim() || null }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, examType: newSetType.trim() || null }),
       });
       if (res.ok) {
         const set = await res.json();
@@ -71,20 +76,17 @@ export function FolderView() {
       } else {
         toast({ title: "Failed to create set", variant: "destructive" });
       }
-    } catch (e) {
-      toast({ title: "Failed to create set", variant: "destructive" });
-    } finally {
-      setNewSetSaving(false);
-    }
+    } catch { toast({ title: "Failed to create set", variant: "destructive" }); }
+    finally { setNewSetSaving(false); }
   };
 
   if (folderLoading || breadcrumbLoading) {
     return (
-      <div className="max-w-[1200px] mx-auto px-6 py-12 space-y-8">
-        <Skeleton className="h-6 w-56" />
-        <Skeleton className="h-32 w-full rounded-2xl" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-40 rounded-2xl" />)}
+      <div className="max-w-3xl mx-auto px-4 pt-6 space-y-4">
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-14 w-full rounded-xl" />
+        <div className="grid grid-cols-2 gap-2">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}
         </div>
       </div>
     );
@@ -92,9 +94,9 @@ export function FolderView() {
 
   if (!folder) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <h2 className="text-2xl font-bold text-muted-foreground">Module not found</h2>
-        <Link href="/"><Button>Return Home</Button></Link>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
+        <p className="text-sm text-muted-foreground">Module not found</p>
+        <Link href="/"><Button size="sm">Go home</Button></Link>
       </div>
     );
   }
@@ -104,7 +106,7 @@ export function FolderView() {
   const displaySets = setReorderMode ? localSetOrder : questionSets;
 
   const enterFolderReorder = () => { setLocalFolderOrder([...subfolders]); setFolderReorderMode(true); };
-  const moveFolder = (idx: number, dir: "up" | "down") => {
+  const moveFolderItem = (idx: number, dir: "up" | "down") => {
     const arr = [...localFolderOrder]; const swap = dir === "up" ? idx - 1 : idx + 1;
     if (swap < 0 || swap >= arr.length) return; [arr[idx], arr[swap]] = [arr[swap], arr[idx]]; setLocalFolderOrder(arr);
   };
@@ -114,7 +116,7 @@ export function FolderView() {
   };
 
   const enterSetReorder = () => { setLocalSetOrder([...questionSets]); setSetReorderMode(true); };
-  const moveSet = (idx: number, dir: "up" | "down") => {
+  const moveSetItem = (idx: number, dir: "up" | "down") => {
     const arr = [...localSetOrder]; const swap = dir === "up" ? idx - 1 : idx + 1;
     if (swap < 0 || swap >= arr.length) return; [arr[idx], arr[swap]] = [arr[swap], arr[idx]]; setLocalSetOrder(arr);
   };
@@ -129,138 +131,215 @@ export function FolderView() {
     } finally { setSavingSetsOrder(false); }
   };
 
-  const hasContent = subfolders.length > 0 || questionSets.length > 0;
   const anyReorderMode = folderReorderMode || setReorderMode;
+  const hasContent = subfolders.length > 0 || questionSets.length > 0;
 
   return (
-    <div className="min-h-[100dvh] flex flex-col items-center">
-      <div className="w-full max-w-[1200px] px-6 py-10 space-y-10">
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm font-medium text-muted-foreground bg-card px-4 py-2.5 rounded-xl border border-border w-max shadow-sm">
-          <Link href="/"><button className="hover:text-primary transition-colors"><HomeIcon className="w-4 h-4" /></button></Link>
-          {breadcrumbs.map((crumb, idx) => (
-            <span key={crumb.id} className="flex items-center gap-2">
-              <ChevronRight className="w-4 h-4 opacity-50" />
-              {idx === breadcrumbs.length - 1 ? (
-                <span className="text-foreground font-bold">{crumb.name}</span>
-              ) : (
-                <Link href={`/folders/${crumb.id}`}><button className="hover:text-primary transition-colors">{crumb.name}</button></Link>
-              )}
-            </span>
-          ))}
-        </nav>
+    <div className="min-h-[100dvh] flex flex-col">
+      <div className="w-full max-w-3xl mx-auto px-4 pt-6 pb-16 space-y-5">
 
-        {/* Hero Header */}
-        <header className="relative overflow-hidden rounded-[2rem] border p-8 md:p-12 shadow-2xl flex flex-col md:flex-row md:items-end justify-between gap-8"
-          style={{ borderColor: `${folder.color}30`, backgroundColor: `${folder.color}08` }}>
-          <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ background: `radial-gradient(circle at top right, ${folder.color}, transparent 60%)` }} />
-          
-          <div className="relative z-10 flex items-center gap-6">
-            <div className="w-24 h-24 rounded-3xl flex items-center justify-center shadow-lg bg-background"
-              style={{ border: `2px solid ${folder.color}50`, boxShadow: `0 12px 40px ${folder.color}40` }}>
-              <FolderIconComp className="w-12 h-12" style={{ color: folder.color }} strokeWidth={2} />
-            </div>
-            <div>
-              <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground">{folder.name}</h1>
-              <div className="flex items-center gap-4 mt-4 font-medium text-muted-foreground">
-                <span className="flex items-center gap-1.5"><FolderIcon className="w-4 h-4" /> {folder.childCount} submodules</span>
-                <span className="flex items-center gap-1.5"><BookMarked className="w-4 h-4" /> {questionSets.length} sets</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="relative z-10 flex flex-wrap items-center gap-3">
-            {anyReorderMode ? (
-              <>
-                <Button variant="secondary" onClick={() => { setFolderReorderMode(false); setSetReorderMode(false); }}>Cancel</Button>
-                {folderReorderMode && <Button onClick={saveFolderOrder} disabled={reorderFolders.isPending}><Check className="w-4 h-4 mr-2" /> Save Module Order</Button>}
-                {setReorderMode && <Button onClick={saveSetOrder} disabled={savingSetsOrder}><Check className="w-4 h-4 mr-2" /> Save Set Order</Button>}
-              </>
-            ) : (
-              <>
-                <Button variant="outline" className="w-12 h-12 p-0 rounded-xl" onClick={() => setEditFolder(folder)}><Settings className="w-5 h-5" /></Button>
-                <Button variant="outline" className="h-12 rounded-xl text-primary border-primary/20 hover:bg-primary/10 font-bold" onClick={() => setDecodeOpen(true)}>
-                  <BookOpen className="w-5 h-5 mr-2" /> Decode
-                </Button>
-                <Button className="h-12 rounded-xl text-white font-bold shadow-lg" style={{ background: folder.color }} onClick={() => setCreateOpen(true)}>
-                  <Plus className="w-5 h-5 mr-2" /> Submodule
-                </Button>
-              </>
-            )}
-          </div>
-        </header>
-
-        {/* Content */}
-        <div className="space-y-12">
-          {/* Subfolders */}
-          {(listLoading || displayFolders.length > 0) && (
-            <section className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-black text-foreground">Submodules</h2>
-                {!anyReorderMode && subfolders.length > 1 && (
-                  <Button variant="ghost" size="sm" onClick={enterFolderReorder} className="text-muted-foreground font-bold uppercase tracking-wider text-xs">
-                    <GripVertical className="w-4 h-4 mr-2" /> Reorder
-                  </Button>
+        {/* Top bar: breadcrumb + actions */}
+        <div className="flex items-center justify-between gap-3">
+          <nav className="flex items-center gap-1 text-xs text-muted-foreground min-w-0 flex-1">
+            <Link href="/"><button className="hover:text-foreground transition-colors shrink-0"><HomeIcon className="w-3.5 h-3.5" /></button></Link>
+            {breadcrumbs.map((crumb, idx) => (
+              <span key={crumb.id} className="flex items-center gap-1 min-w-0">
+                <ChevronRight className="w-3 h-3 opacity-40 shrink-0" />
+                {idx === breadcrumbs.length - 1 ? (
+                  <span className="text-foreground font-medium truncate">{crumb.name}</span>
+                ) : (
+                  <Link href={`/folders/${crumb.id}`}>
+                    <button className="hover:text-foreground transition-colors truncate">{crumb.name}</button>
+                  </Link>
                 )}
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <AnimatePresence mode="popLayout">
-                  {displayFolders.map((sub, idx) => (
-                    <FolderCard key={sub.id} folder={sub} index={idx} onEdit={setEditFolder} onDelete={setDeleteFolder} onMove={setMoveFolderTarget}
-                      reorderMode={folderReorderMode} onMoveUp={() => moveFolder(idx, "up")} onMoveDown={() => moveFolder(idx, "down")}
-                      isFirst={idx === 0} isLast={idx === displayFolders.length - 1} />
-                  ))}
-                </AnimatePresence>
-              </div>
-            </section>
-          )}
+              </span>
+            ))}
+          </nav>
+          <ThemeToggle />
+        </div>
 
-          {/* Question Sets */}
-          {(setsLoading || displaySets.length > 0) && (
-            <section className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-black text-foreground">Question Sets</h2>
-                <div className="flex items-center gap-3">
-                  {!anyReorderMode && questionSets.length > 1 && (
-                    <Button variant="ghost" size="sm" onClick={enterSetReorder} className="text-muted-foreground font-bold uppercase tracking-wider text-xs">
-                      <GripVertical className="w-4 h-4 mr-2" /> Reorder
-                    </Button>
-                  )}
-                  {!anyReorderMode && (
-                    <Button variant="outline" size="sm" onClick={() => setNewSetOpen(true)} className="font-bold border-primary/30 text-primary">
-                      <Plus className="w-4 h-4 mr-1" /> New Set
-                    </Button>
-                  )}
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <AnimatePresence mode="popLayout">
-                  {displaySets.map((set, idx) => (
-                    <QuestionSetCard key={set.id} set={set} index={idx} folderColor={folder.color} folderId={folderId}
-                      reorderMode={setReorderMode} onMoveUp={() => moveSet(idx, "up")} onMoveDown={() => moveSet(idx, "down")}
-                      isFirst={idx === 0} isLast={idx === displaySets.length - 1}
-                      onRenamed={(id, name) => setLocalSetOrder(prev => prev.map(s => s.id === id ? { ...s, name } : s))} />
-                  ))}
-                </AnimatePresence>
-              </div>
-            </section>
-          )}
+        {/* Folder header strip */}
+        <div
+          className="flex items-center gap-3 px-3.5 py-3 rounded-xl border"
+          style={{ borderColor: `${folder.color}30`, backgroundColor: `${folder.color}08` }}
+        >
+          <div
+            className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+            style={{ backgroundColor: `${folder.color}22`, color: folder.color }}
+          >
+            <FolderIconComp className="w-5 h-5" strokeWidth={2} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-foreground truncate">{folder.name}</p>
+            <p className="text-xs text-muted-foreground">
+              {subfolders.length} submodules · {questionSets.length} sets
+            </p>
+          </div>
 
-          {!listLoading && !setsLoading && !hasContent && (
-            <div className="py-20 text-center flex flex-col items-center justify-center border-2 border-dashed border-border rounded-2xl bg-card/50">
-              <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ background: `${folder.color}20` }}>
-                <FolderIconComp className="w-10 h-10" style={{ color: folder.color }} strokeWidth={1.5} />
-              </div>
-              <h3 className="text-2xl font-bold text-foreground">Empty Module</h3>
-              <p className="text-muted-foreground mt-2 mb-8 max-w-sm">Populate this module by creating a submodule, a new question set, or decoding raw text into questions.</p>
-              <div className="flex flex-wrap items-center justify-center gap-4">
-                <Button onClick={() => setCreateOpen(true)} className="font-bold h-12 px-6" style={{ background: folder.color, color: "#fff" }}><Plus className="w-5 h-5 mr-2" /> Submodule</Button>
-                <Button variant="outline" onClick={() => setNewSetOpen(true)} className="font-bold h-12 px-6"><BookMarked className="w-5 h-5 mr-2" /> New Set</Button>
-                <Button variant="outline" onClick={() => setDecodeOpen(true)} className="font-bold h-12 px-6 text-primary border-primary/30"><BookOpen className="w-5 h-5 mr-2" /> Decode Text</Button>
-              </div>
+          {anyReorderMode ? (
+            <div className="flex items-center gap-2 shrink-0">
+              <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => { setFolderReorderMode(false); setSetReorderMode(false); }}>Cancel</Button>
+              {folderReorderMode && (
+                <Button size="sm" className="h-8 text-xs gap-1" onClick={saveFolderOrder} disabled={reorderFolders.isPending}>
+                  <Check className="w-3.5 h-3.5" /> Save
+                </Button>
+              )}
+              {setReorderMode && (
+                <Button size="sm" className="h-8 text-xs gap-1" onClick={saveSetOrder} disabled={savingSetsOrder}>
+                  <Check className="w-3.5 h-3.5" /> Save
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Button
+                size="sm" variant="ghost"
+                className="h-8 w-8 p-0 text-muted-foreground"
+                onClick={() => setEditFolder(folder)}
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm" variant="outline"
+                className="h-8 text-xs gap-1.5 border-border"
+                onClick={() => setDecodeOpen(true)}
+              >
+                <BookOpen className="w-3.5 h-3.5" /> Decode
+              </Button>
+              <Button
+                size="sm"
+                className="h-8 text-xs gap-1.5 text-white"
+                style={{ backgroundColor: folder.color }}
+                onClick={() => setCreateOpen(true)}
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </Button>
             </div>
           )}
         </div>
+
+        {/* Subfolders */}
+        {(listLoading || displayFolders.length > 0) && (
+          <section className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Submodules</p>
+              {!anyReorderMode && subfolders.length > 1 && (
+                <button onClick={enterFolderReorder} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+                  <GripVertical className="w-3.5 h-3.5" /> Reorder
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <AnimatePresence mode="popLayout">
+                {displayFolders.map((sub, idx) => (
+                  <FolderCard
+                    key={sub.id} folder={sub} index={idx}
+                    onEdit={setEditFolder} onDelete={setDeleteFolder} onMove={setMoveFolderTarget}
+                    reorderMode={folderReorderMode}
+                    onMoveUp={() => moveFolderItem(idx, "up")}
+                    onMoveDown={() => moveFolderItem(idx, "down")}
+                    isFirst={idx === 0} isLast={idx === displayFolders.length - 1}
+                  />
+                ))}
+              </AnimatePresence>
+            </div>
+          </section>
+        )}
+
+        {/* Question Sets */}
+        {(setsLoading || displaySets.length > 0) && (
+          <section className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Question Sets</p>
+              <div className="flex items-center gap-3">
+                {!anyReorderMode && questionSets.length > 1 && (
+                  <button onClick={enterSetReorder} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+                    <GripVertical className="w-3.5 h-3.5" /> Reorder
+                  </button>
+                )}
+                {!anyReorderMode && (
+                  <button onClick={() => setNewSetOpen(true)} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+                    <Plus className="w-3.5 h-3.5" /> New set
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <AnimatePresence mode="popLayout">
+                {displaySets.map((set, idx) => (
+                  <QuestionSetCard
+                    key={set.id} set={set} index={idx}
+                    folderColor={folder.color} folderId={folderId}
+                    reorderMode={setReorderMode}
+                    onMoveUp={() => moveSetItem(idx, "up")}
+                    onMoveDown={() => moveSetItem(idx, "down")}
+                    isFirst={idx === 0} isLast={idx === displaySets.length - 1}
+                    onRenamed={(id, name) => setLocalSetOrder(prev => prev.map(s => s.id === id ? { ...s, name } : s))}
+                  />
+                ))}
+              </AnimatePresence>
+            </div>
+          </section>
+        )}
+
+        {/* Empty state */}
+        {!listLoading && !setsLoading && !hasContent && (
+          <div className="py-12 text-center space-y-3">
+            <div
+              className="w-10 h-10 rounded-xl mx-auto flex items-center justify-center"
+              style={{ backgroundColor: `${folder.color}20`, color: folder.color }}
+            >
+              <FolderIconComp className="w-5 h-5" strokeWidth={1.5} />
+            </div>
+            <p className="text-sm text-muted-foreground">This module is empty</p>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button size="sm" className="gap-1.5 text-white" style={{ backgroundColor: folder.color }} onClick={() => setCreateOpen(true)}>
+                <Plus className="w-3.5 h-3.5" /> Submodule
+              </Button>
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setNewSetOpen(true)}>
+                <BookMarked className="w-3.5 h-3.5" /> New Set
+              </Button>
+              <Button size="sm" variant="outline" className="gap-1.5 text-primary border-primary/30" onClick={() => setDecodeOpen(true)}>
+                <BookOpen className="w-3.5 h-3.5" /> Decode
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Inline new set form */}
+        <AnimatePresence>
+          {newSetOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              className="fixed inset-x-0 bottom-0 z-50 bg-card border-t border-border px-4 py-4 space-y-3 shadow-2xl"
+            >
+              <p className="text-sm font-semibold text-foreground">New Question Set</p>
+              <input
+                autoFocus
+                placeholder="Set name…"
+                value={newSetName}
+                onChange={e => setNewSetName(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && createNewSet()}
+                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+              <input
+                placeholder="Type: mcq / cq / sq / mixed (optional)"
+                value={newSetType}
+                onChange={e => setNewSetType(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && createNewSet()}
+                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+              <div className="flex gap-2">
+                <Button size="sm" variant="ghost" className="flex-1" onClick={() => setNewSetOpen(false)}>Cancel</Button>
+                <Button size="sm" className="flex-1 gap-1.5" onClick={createNewSet} disabled={newSetSaving || !newSetName.trim()}>
+                  {newSetSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />} Create
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <FolderFormDialog open={createOpen} onOpenChange={setCreateOpen} parentId={folder.id} />
