@@ -7,6 +7,8 @@ import { Home } from "@/pages/Home";
 import { FolderView } from "@/pages/FolderView";
 import { QuestionSetView } from "@/pages/QuestionSetView";
 import { MockExam } from "@/pages/MockExam";
+import { Bookmarks } from "@/pages/Bookmarks";
+import { WeakQuestions } from "@/pages/WeakQuestions";
 import { ThemeProvider } from "@/lib/theme";
 
 export { useTheme, ThemeContext } from "@/lib/theme";
@@ -25,6 +27,8 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/mock-exam" component={MockExam} />
+      <Route path="/bookmarks" component={Bookmarks} />
+      <Route path="/weak-questions" component={WeakQuestions} />
       <Route path="/folders/:id" component={FolderView} />
       <Route path="/sets/:id" component={QuestionSetView} />
       <Route component={NotFound} />

@@ -13,10 +13,14 @@ import {
   Eye, EyeOff, BookOpen, Pencil, Trash2, X, Save, Plus, ImageIcon,
   Loader2, ChevronDown, ChevronUp, GripVertical, ArrowUp, ArrowDown, Check,
   BookMarked, Zap, Timer, List, RotateCcw, Trophy, ChevronLeft, Hash,
-  Link2, Copy, Square, CheckSquare, Search, FolderOpen,
+  Link2, Copy, Square, CheckSquare, Search, FolderOpen, Bookmark, Flag,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useLinkQuestions } from "@workspace/api-client-react";
+import {
+  readBookmarks, saveBookmarks, readReviewIds, saveReviewIds,
+  readReviewList, saveReviewList, recordWrong, BookmarkItem,
+} from "@/lib/localStore";
 
 // ─── Theme hook ───────────────────────────────────────────────────────────────
 function useIsLight() {
@@ -119,12 +123,17 @@ interface QCardProps {
   onToggleSelect?: () => void;
   isHighlighted?: boolean;
   isLight?: boolean;
+  isBookmarked?: boolean;
+  isReviewed?: boolean;
+  onBookmark?: () => void;
+  onReview?: () => void;
 }
 
 function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorderToPosition,
   mode, practiceSelected, practiceRevealed, onPracticeSelect,
   examSelected, examSubmitted, onExamSelect, cardRef, onImageZoom,
-  selectMode, selected, onToggleSelect, isHighlighted, isLight = false }: QCardProps) {
+  selectMode, selected, onToggleSelect, isHighlighted, isLight = false,
+  isBookmarked = false, isReviewed = false, onBookmark, onReview }: QCardProps) {
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -548,7 +557,8 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
               </div>
             )}
             {q.questionText && (
-              <div className={`chorcha-q-body text-white/90 text-sm leading-relaxed ${isCq ? "p-3 rounded-xl bg-amber-500/5 border border-amber-500/10" : isSq ? "p-3 rounded-xl bg-sky-500/5 border border-sky-500/10" : ""}`}>
+              <div className={`chorcha-q-body text-white/90 text-sm leading-relaxed select-none ${isCq ? "p-3 rounded-xl bg-amber-500/5 border border-amber-500/10" : isSq ? "p-3 rounded-xl bg-sky-500/5 border border-sky-500/10" : ""}`}
+                onCopy={e => e.preventDefault()} onContextMenu={e => e.preventDefault()}>
                 <MathText text={q.questionText} />
               </div>
             )}
@@ -567,6 +577,18 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
               )}
             </div>
           )}
+          {/* Bookmark button */}
+          <button onClick={(e) => { e.stopPropagation(); onBookmark?.(); }}
+            title={isBookmarked ? "Remove bookmark" : "Bookmark this question"}
+            className={`flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all ${isBookmarked ? "text-amber-400 bg-amber-500/15 opacity-100" : "opacity-25 hover:opacity-70 hover:bg-white/8 text-white/60"}`}>
+            <Bookmark className="w-3.5 h-3.5" fill={isBookmarked ? "currentColor" : "none"} />
+          </button>
+          {/* Mark for review button */}
+          <button onClick={(e) => { e.stopPropagation(); onReview?.(); }}
+            title={isReviewed ? "Remove review flag" : "Flag for review"}
+            className={`flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all ${isReviewed ? "text-rose-400 bg-rose-500/15 opacity-100" : "opacity-25 hover:opacity-70 hover:bg-white/8 text-white/60"}`}>
+            <Flag className="w-3.5 h-3.5" fill={isReviewed ? "currentColor" : "none"} />
+          </button>
           {/* Copy ID button — visible in all modes */}
           <button onClick={handleCopyId} title={`Copy question ID: ${q.id}`}
             className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-white/8"
@@ -747,7 +769,9 @@ const QuestionCardMemo = memo(QuestionCard, (prev, next) =>
   prev.examSubmitted === next.examSubmitted &&
   prev.selectMode === next.selectMode &&
   prev.selected === next.selected &&
-  prev.isHighlighted === next.isHighlighted
+  prev.isHighlighted === next.isHighlighted &&
+  prev.isBookmarked === next.isBookmarked &&
+  prev.isReviewed === next.isReviewed
 );
 
 // Cards not yet near the viewport render a thin placeholder — prevents mounting
@@ -1273,7 +1297,7 @@ function ExamResults({ questions, examAnswers, onRetry, onBack, negativeMarking 
       <div className="flex gap-1 p-1 rounded-2xl w-fit" style={{ background: tabsBg, border: `1px solid ${tabsBrd}` }}>
         {([
           { id: "all", label: `All (${questions.length})` },
-          { id: "correct", label: `✓ ${totalCorrect}` },
+          { id: "correct", label: `Correct (${totalCorrect})` },
           { id: "wrong", label: `✗ ${totalWrong}` },
           { id: "unanswered", label: `— ${totalUnanswered}` },
         ] as const).map(f => (
