@@ -58,7 +58,6 @@ function tokenize(input: string): Segment[] {
   return segments;
 }
 
-// Module-level cache — each unique expression is rendered once per session
 const _mathCache = new Map<string, string>();
 function renderMath(value: string, display: boolean): string {
   const key = (display ? "D:" : "I:") + value;
@@ -95,7 +94,15 @@ function handleImageError(e: React.SyntheticEvent<HTMLImageElement>) {
       return;
     }
   } catch { /* fall through */ }
-  img.style.display = "none";
+  // All fallbacks exhausted — hide completely so no white box remains
+  const parent = img.parentElement;
+  if (parent) parent.style.display = "none";
+  else img.style.display = "none";
+}
+
+function handleImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+  const img = e.currentTarget;
+  img.style.opacity = "1";
 }
 
 export function MathText({ text, className, imageBlock = true }: MathTextProps) {
@@ -121,15 +128,18 @@ export function MathText({ text, className, imageBlock = true }: MathTextProps) 
             return (
               <span key={idx} style={{ display: "block", textAlign: "center", margin: "0.75rem 0" }}>
                 <img src={seg.value} alt="" loading="lazy"
-                  style={{ maxWidth: "100%", height: "auto", borderRadius: "0.5rem" }}
-                  className="border border-white/15 bg-white p-1"
+                  style={{ maxWidth: "100%", height: "auto", borderRadius: "0.5rem", opacity: 0, transition: "opacity 0.25s" }}
+                  className="border border-white/15 p-1"
+                  onLoad={handleImageLoad}
                   onError={handleImageError} />
               </span>
             );
           }
           return (
             <img key={idx} src={seg.value} alt="" loading="lazy"
-              className="inline-block max-h-12 w-auto align-middle mx-1 rounded border border-white/15 bg-white"
+              style={{ opacity: 0, transition: "opacity 0.25s" }}
+              className="inline-block max-h-12 w-auto align-middle mx-1 rounded border border-white/15"
+              onLoad={handleImageLoad}
               onError={handleImageError} />
           );
         }

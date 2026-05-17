@@ -72,7 +72,11 @@ function handleStemImageError(e: { currentTarget: HTMLImageElement }) {
       tried.push(host); img.dataset.triedHosts = tried.join("|"); img.src = `${host}${path}`; return;
     }
   } catch { /* ignore */ }
+  // All fallbacks exhausted — hide so no white box
   img.style.display = "none";
+}
+function handleStemImageLoad(e: { currentTarget: HTMLImageElement }) {
+  e.currentTarget.style.opacity = "1";
 }
 function ta(value: string, onChange: (v: string) => void, placeholder: string, rows = 2) {
   return <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={rows}
@@ -548,8 +552,9 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
                 {q.stemImages.map((url, i) => url && (
                   <img key={i} src={url} alt="" loading="lazy"
                     draggable={false}
-                    className="max-w-full rounded-lg border border-white/15 bg-white p-1 select-none cursor-zoom-in"
-                    style={{ userSelect: "none" }}
+                    className="max-w-full rounded-lg border border-white/15 p-1 select-none cursor-zoom-in"
+                    style={{ userSelect: "none", opacity: 0, transition: "opacity 0.25s" }}
+                    onLoad={handleStemImageLoad}
                     onError={handleStemImageError}
                     onContextMenu={e => e.preventDefault()}
                     onClick={() => onImageZoom?.(url)} />

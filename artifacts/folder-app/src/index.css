@@ -112,48 +112,48 @@
 }
 
 /* ═══════════════════════════════════════════
-   LIGHT MODE — crisp, professional slate
+   LIGHT MODE — warm paper / reading parchment
 ═══════════════════════════════════════════ */
 html.light {
   color-scheme: light;
-  --background: 220 20% 97%;
-  --foreground: 222 30% 10%;
-  --border: 220 16% 88%;
-  --card: 0 0% 100%;
-  --card-foreground: 222 30% 10%;
-  --card-border: 220 16% 88%;
-  --sidebar: 220 18% 96%;
-  --sidebar-foreground: 222 30% 10%;
-  --sidebar-border: 220 16% 88%;
-  --sidebar-primary: 252 65% 52%;
+  --background: 38 42% 94%;        /* warm cream parchment */
+  --foreground: 26 40% 12%;        /* warm dark ink */
+  --border: 34 28% 80%;            /* warm tan border */
+  --card: 40 50% 97%;              /* very light warm paper */
+  --card-foreground: 26 40% 12%;
+  --card-border: 34 28% 82%;
+  --sidebar: 38 38% 92%;
+  --sidebar-foreground: 26 40% 12%;
+  --sidebar-border: 34 28% 80%;
+  --sidebar-primary: 252 60% 50%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 220 16% 91%;
-  --sidebar-accent-foreground: 222 30% 10%;
-  --sidebar-ring: 220 16% 80%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222 30% 10%;
-  --popover-border: 220 16% 88%;
-  --primary: 252 65% 52%;
+  --sidebar-accent: 36 30% 88%;
+  --sidebar-accent-foreground: 26 40% 12%;
+  --sidebar-ring: 34 28% 72%;
+  --popover: 40 50% 97%;
+  --popover-foreground: 26 40% 12%;
+  --popover-border: 34 28% 82%;
+  --primary: 252 60% 50%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 220 16% 92%;
-  --secondary-foreground: 222 30% 10%;
-  --muted: 220 16% 93%;
-  --muted-foreground: 220 12% 45%;
-  --accent: 220 16% 91%;
-  --accent-foreground: 222 30% 10%;
-  --destructive: 0 70% 48%;
+  --secondary: 36 25% 88%;
+  --secondary-foreground: 26 40% 12%;
+  --muted: 36 22% 89%;
+  --muted-foreground: 28 20% 46%;  /* warm brown-gray */
+  --accent: 36 28% 86%;
+  --accent-foreground: 26 40% 12%;
+  --destructive: 0 68% 46%;
   --destructive-foreground: 0 0% 100%;
-  --input: 220 16% 88%;
-  --ring: 220 16% 72%;
-  --chart-1: 252 65% 52%;
-  --chart-2: 320 65% 44%;
-  --chart-3: 160 65% 32%;
-  --chart-4: 38 75% 38%;
-  --chart-5: 200 65% 40%;
-  --button-outline: rgba(0,0,0,.10);
-  --badge-outline: rgba(0,0,0,.06);
-  --elevate-1: rgba(0,0,0,.02);
-  --elevate-2: rgba(0,0,0,.04);
+  --input: 36 26% 85%;
+  --ring: 34 26% 70%;
+  --chart-1: 252 60% 50%;
+  --chart-2: 320 60% 42%;
+  --chart-3: 155 55% 30%;
+  --chart-4: 38 72% 38%;
+  --chart-5: 195 58% 36%;
+  --button-outline: rgba(90,60,20,.12);
+  --badge-outline: rgba(90,60,20,.07);
+  --elevate-1: rgba(90,60,20,.03);
+  --elevate-2: rgba(90,60,20,.05);
 }
 
 /* ── Light mode: white-* text → slate ink ── */
@@ -192,16 +192,16 @@ html.light [class*="bg-white\/8"] { background-color: rgba(30,41,59,0.04) !impor
 html.light input::placeholder,
 html.light textarea::placeholder { color: rgba(30,41,59,0.36) !important; }
 
-/* ── Light mode: fixed header bar ── */
+/* ── Light mode: fixed header bar — warm paper ── */
 html.light .bg-background\/95 {
-  background: rgba(236,240,248,0.97) !important;
-  border-bottom-color: rgba(30,41,59,0.10) !important;
-  box-shadow: 0 1px 12px rgba(30,41,59,0.06) !important;
+  background: rgba(244,235,218,0.97) !important;
+  border-bottom-color: rgba(120,80,30,0.12) !important;
+  box-shadow: 0 1px 12px rgba(100,60,10,0.07) !important;
 }
 
-/* ── Light mode: scrollbar ── */
-html.light ::-webkit-scrollbar-track { background: hsl(220,18%,93%); }
-html.light ::-webkit-scrollbar-thumb { background: rgba(30,41,59,0.18); border-radius: 99px; }
+/* ── Light mode: scrollbar — warm paper ── */
+html.light ::-webkit-scrollbar-track { background: hsl(38,28%,88%); }
+html.light ::-webkit-scrollbar-thumb { background: rgba(120,70,20,0.22); border-radius: 99px; }
 
 /* ═══════════════════════════════════════════
    BASE
@@ -219,10 +219,10 @@ html.dark body, body {
   min-height: 100dvh;
 }
 
-/* ── Light background ── */
+/* ── Light background — warm paper ── */
 html.light body {
   background:
-    radial-gradient(ellipse 80% 40% at 50% -2%, rgba(99,102,241,0.06) 0%, transparent 55%),
+    radial-gradient(ellipse 90% 50% at 50% -5%, rgba(180,140,80,0.08) 0%, transparent 60%),
     hsl(var(--background));
   min-height: 100dvh;
 }
@@ -241,17 +241,17 @@ html.dark .chorcha-question-card,
 }
 
 html.light .chorcha-question-card {
-  background: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  box-shadow: 0 1px 4px rgba(15,23,42,0.05), 0 4px 16px rgba(15,23,42,0.04) !important;
-  color: #0f172a !important;
+  background: #fdf8f0 !important;               /* warm paper card */
+  border: 1px solid #d8c9ae !important;
+  box-shadow: 0 1px 3px rgba(100,60,10,0.06), 0 4px 16px rgba(100,60,10,0.05) !important;
+  color: #2d1f0e !important;
 }
 
 html.light .chorcha-q-body {
   font-family: var(--app-font-sans) !important;
   font-size: 0.9375rem !important;
-  line-height: 1.7 !important;
-  color: #1e293b !important;
+  line-height: 1.75 !important;
+  color: #2d1f0e !important;
 }
 
 html.light .chorcha-q-body p,
@@ -264,26 +264,26 @@ html.light .chorcha-q-body em {
 }
 
 html.light .chorcha-question-card [class*="text-white\/2"],
-html.light .chorcha-question-card [class*="text-white\/3"] { color: #94a3b8 !important; }
+html.light .chorcha-question-card [class*="text-white\/3"] { color: #b8a48a !important; }
 html.light .chorcha-question-card [class*="text-white\/4"],
-html.light .chorcha-question-card [class*="text-white\/5"] { color: #64748b !important; }
+html.light .chorcha-question-card [class*="text-white\/5"] { color: #9a7e5e !important; }
 html.light .chorcha-question-card [class*="text-white\/6"],
-html.light .chorcha-question-card [class*="text-white\/7"] { color: #475569 !important; }
+html.light .chorcha-question-card [class*="text-white\/7"] { color: #6b5032 !important; }
 html.light .chorcha-question-card [class*="text-white\/8"],
 html.light .chorcha-question-card [class*="text-white\/9"],
 html.light .chorcha-question-card .text-white,
-html.light .chorcha-question-card [class*="text-white"] { color: #0f172a !important; }
+html.light .chorcha-question-card [class*="text-white"] { color: #2d1f0e !important; }
 
-html.light .chorcha-question-card [class*="border-white"] { border-color: #e2e8f0 !important; }
-html.light .chorcha-question-card [class*="bg-white\/"] { background-color: #f8fafc !important; }
+html.light .chorcha-question-card [class*="border-white"] { border-color: #d8c9ae !important; }
+html.light .chorcha-question-card [class*="bg-white\/"] { background-color: rgba(200,160,100,0.06) !important; }
 
-html.light .chorcha-question-card .bg-sky-500\/6 { background: #f0f9ff !important; }
-html.light .chorcha-question-card .bg-purple-500\/5 { background: #faf5ff !important; }
-html.light .chorcha-question-card .bg-amber-500\/5 { background: #fffbeb !important; }
-html.light .chorcha-question-card .bg-sky-500\/5 { background: #f0f9ff !important; }
+html.light .chorcha-question-card .bg-sky-500\/6 { background: #eef6fb !important; }
+html.light .chorcha-question-card .bg-purple-500\/5 { background: #f6f0fb !important; }
+html.light .chorcha-question-card .bg-amber-500\/5 { background: #fdf6e3 !important; }
+html.light .chorcha-question-card .bg-sky-500\/5 { background: #eef6fb !important; }
 
 html.light .chorcha-question-card input::placeholder,
-html.light .chorcha-question-card textarea::placeholder { color: #94a3b8 !important; }
+html.light .chorcha-question-card textarea::placeholder { color: #b8a48a !important; }
 
 /* ═══════════════════════════════════════════
    TABLE
