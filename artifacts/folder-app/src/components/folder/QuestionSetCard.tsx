@@ -39,7 +39,6 @@ export function QuestionSetCard({
   const [saving, setSaving] = useState(false);
 
   const cfg = TYPE_CONFIG[set.examType ?? "unknown"] ?? TYPE_CONFIG.unknown;
-  const TypeIcon = cfg.Icon;
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
@@ -66,22 +65,17 @@ export function QuestionSetCard({
   };
 
   const row = (
-    <div className="group relative flex items-center gap-3 px-3.5 py-2.5 bg-card border border-border rounded-xl cursor-pointer hover:border-border/80 hover:bg-card transition-all duration-100">
-      {/* Type dot */}
-      <div
-        className="w-1.5 h-5 rounded-full shrink-0"
-        style={{ backgroundColor: cfg.color }}
-      />
+    <div className="group relative flex items-center gap-2.5 px-3 py-2.5 bg-card border border-border rounded-xl cursor-pointer hover:border-border/80 hover:bg-accent/30 transition-all duration-100">
+      {/* Color bar */}
+      <div className="w-1.5 h-5 rounded-full shrink-0" style={{ backgroundColor: cfg.color }} />
 
       {/* Type badge */}
-      <span
-        className="text-[10px] font-bold px-1.5 py-0.5 rounded-md shrink-0"
-        style={{ backgroundColor: `${cfg.color}18`, color: cfg.color }}
-      >
+      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md shrink-0"
+        style={{ backgroundColor: `${cfg.color}18`, color: cfg.color }}>
         {cfg.label}
       </span>
 
-      {/* Name */}
+      {/* Name — takes all remaining space */}
       <div className="flex-1 min-w-0">
         {renaming ? (
           <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
@@ -92,26 +86,38 @@ export function QuestionSetCard({
               onKeyDown={e => { if (e.key === "Enter") commitRename(); if (e.key === "Escape") setRenaming(false); }}
               className="flex-1 min-w-0 bg-background border border-primary/40 rounded-lg px-2 py-1 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
-            <button onClick={commitRename} disabled={saving} className="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0">
+            <button onClick={commitRename} disabled={saving}
+              className="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0">
               {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
             </button>
-            <button onClick={() => setRenaming(false)} className="w-7 h-7 rounded-lg bg-muted text-muted-foreground flex items-center justify-center shrink-0">
+            <button onClick={() => setRenaming(false)}
+              className="w-7 h-7 rounded-lg bg-muted text-muted-foreground flex items-center justify-center shrink-0">
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
         ) : (
-          <p className="text-sm font-medium text-foreground truncate">{set.name}</p>
+          <p className="text-sm font-medium text-foreground truncate leading-tight">{set.name}</p>
         )}
       </div>
 
-      {/* Count */}
+      {/* Count — always visible, fixed-width so it never gets squeezed off */}
       {!renaming && (
-        <span className="text-xs text-muted-foreground shrink-0 tabular-nums">{set.totalQuestions}q</span>
+        <span className="text-xs font-semibold text-muted-foreground shrink-0 tabular-nums w-8 text-right">
+          {set.totalQuestions}q
+        </span>
       )}
 
-      {/* Hover actions */}
+      {/* Chevron — always visible, fades when hover actions appear */}
       {!reorderMode && !renaming && (
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" onClick={e => e.stopPropagation()}>
+        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0 group-hover:opacity-0 transition-opacity duration-100" />
+      )}
+
+      {/* Hover actions — absolutely positioned so they take ZERO layout space normally */}
+      {!reorderMode && !renaming && (
+        <div
+          className="absolute right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-100 bg-card/80 backdrop-blur-sm rounded-lg px-1 py-0.5"
+          onClick={e => e.stopPropagation()}
+        >
           <button
             onClick={e => { e.preventDefault(); setNameInput(set.name); setRenaming(true); }}
             className="w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -120,15 +126,12 @@ export function QuestionSetCard({
           </button>
           <button
             onClick={handleDelete}
-            className="w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-colors"
+            className="w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
           >
             <Trash2 className="w-3 h-3" />
           </button>
-          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground ml-0.5" />
+          <ChevronRight className="w-3.5 h-3.5 text-primary ml-0.5" />
         </div>
-      )}
-      {!reorderMode && !renaming && (
-        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:hidden shrink-0" />
       )}
     </div>
   );
@@ -148,10 +151,12 @@ export function QuestionSetCard({
           <div className="absolute inset-0 flex items-center justify-between px-3 bg-background/90 backdrop-blur-sm rounded-xl border-2 border-primary/50">
             <span className="text-xs font-bold text-primary">{index + 1}</span>
             <div className="flex gap-1.5">
-              <button onClick={onMoveUp} disabled={isFirst} className="w-7 h-7 rounded-lg border bg-card flex items-center justify-center disabled:opacity-30">
+              <button onClick={onMoveUp} disabled={isFirst}
+                className="w-7 h-7 rounded-lg border bg-card flex items-center justify-center disabled:opacity-30">
                 <ArrowUp className="w-3.5 h-3.5" />
               </button>
-              <button onClick={onMoveDown} disabled={isLast} className="w-7 h-7 rounded-lg border bg-card flex items-center justify-center disabled:opacity-30">
+              <button onClick={onMoveDown} disabled={isLast}
+                className="w-7 h-7 rounded-lg border bg-card flex items-center justify-center disabled:opacity-30">
                 <ArrowDown className="w-3.5 h-3.5" />
               </button>
             </div>

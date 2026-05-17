@@ -1491,7 +1491,7 @@ export function QuestionSetView() {
   const [practiceRevealedId, setPracticeRevealedId] = useState<number | null>(null);
   const [practiceCurrentIdx, setPracticeCurrentIdx] = useState(0);
   const [showResults, setShowResults] = useState(false);
-  const [autoScroll, setAutoScroll] = useState(false);
+  const [autoScroll, setAutoScroll] = useState(true);
 
   // Refs so memoized cards always call the latest handler (avoids stale-closure bug
   // caused by QuestionCardMemo skipping onPracticeSelect / onExamSelect in its areEqual)
@@ -1506,7 +1506,7 @@ export function QuestionSetView() {
   const [selectedDuration, setSelectedDuration] = useState<number | null>(null);
   const [showExamGrid, setShowExamGrid] = useState(false);
   const [examCurrentIdx, setExamCurrentIdx] = useState(0);
-  const [examAutoScroll, setExamAutoScroll] = useState(false);
+  const [examAutoScroll, setExamAutoScroll] = useState(true);
 
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   // Pending scroll: set inside a setState updater, consumed by useEffect after commit

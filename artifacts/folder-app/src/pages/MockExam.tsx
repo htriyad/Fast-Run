@@ -194,6 +194,7 @@ export function MockExam() {
   const [submitted, setSubmitted] = useState(false);
   const [examRunning, setExamRunning] = useState(false);
   const [showReview, setShowReview] = useState(false);
+  const [autoScroll, setAutoScroll] = useState(true); // auto-advance to next unanswered after selecting
 
   const totalTime = questionCount * timePerQuestion;
   const { remaining, percent, expired } = useTimer(totalTime, examRunning && !submitted);
@@ -267,7 +268,24 @@ export function MockExam() {
     if (submitted) return;
     const qId = questions[currentIdx]?.id;
     if (!qId) return;
-    setAnswers((prev) => ({ ...prev, [qId]: letter }));
+    setAnswers((prev) => {
+      const next = { ...prev, [qId]: letter };
+      // Auto-scroll: advance to next unanswered question after a short delay
+      if (autoScroll) {
+        setTimeout(() => {
+          setCurrentIdx(cur => {
+            // Find next unanswered after current
+            const nextUnanswered = questions.findIndex((q, i) => i > cur && !next[q.id]);
+            if (nextUnanswered !== -1) return nextUnanswered;
+            // Wrap: find any unanswered
+            const anyUnanswered = questions.findIndex((q, i) => i !== cur && !next[q.id]);
+            if (anyUnanswered !== -1) return anyUnanswered;
+            return cur;
+          });
+        }, 600);
+      }
+      return next;
+    });
   };
 
   const goTo = (idx: number) => {
@@ -475,26 +493,51 @@ export function MockExam() {
 
                 {/* Time per question */}
                 <div className="p-5 rounded-2xl bg-white/4 border border-white/8 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-white/50" />
-                      <span className="font-semibold text-white/80">Time per Question</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => setTimePerQuestion(t => Math.max(15, t - 15))}
-                        className="w-8 h-8 rounded-lg bg-white/8 hover:bg-white/12 flex items-center justify-center transition-all">
-                        <Minus className="w-3.5 h-3.5 text-white/60" />
-                      </button>
-                      <span className="w-16 text-center font-bold text-lg text-white">{formatTime(timePerQuestion)}</span>
-                      <button onClick={() => setTimePerQuestion(t => Math.min(300, t + 15))}
-                        className="w-8 h-8 rounded-lg bg-white/8 hover:bg-white/12 flex items-center justify-center transition-all">
-                        <Plus className="w-3.5 h-3.5 text-white/60" />
-                      </button>
-                    </div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Clock className="w-4 h-4 text-white/50" />
+                    <span className="font-semibold text-white/80">Time per Question</span>
                   </div>
-                  <p className="text-xs text-white/30">
-                    Total time: <span className="text-white/55 font-semibold">{formatTime(questionCount * timePerQuestion)}</span>
-                  </p>
+                  {/* Quick presets */}
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {[
+                      { label: "30s", val: 30 },
+                      { label: "45s", val: 45 },
+                      { label: "1m",  val: 60 },
+                      { label: "1.5m", val: 90 },
+                      { label: "2m",  val: 120 },
+                    ].map(({ label, val }) => (
+                      <button key={val} onClick={() => setTimePerQuestion(val)}
+                        className={`py-2 rounded-xl text-xs font-bold border transition-all ${
+                          timePerQuestion === val
+                            ? "bg-indigo-500/25 border-indigo-500/50 text-indigo-300"
+                            : "bg-white/5 border-white/10 text-white/45 hover:bg-white/10 hover:text-white/70"
+                        }`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Fine-tune */}
+                  <div className="flex items-center justify-between">
+                    <button onClick={() => setTimePerQuestion(t => Math.max(15, t - 15))}
+                      className="w-9 h-9 rounded-xl bg-white/8 hover:bg-white/14 flex items-center justify-center transition-all active:scale-95">
+                      <Minus className="w-3.5 h-3.5 text-white/60" />
+                    </button>
+                    <div className="text-center">
+                      <div className="font-bold text-2xl text-white tabular-nums">{formatTime(timePerQuestion)}</div>
+                      <div className="text-[10px] text-white/30 mt-0.5">per question</div>
+                    </div>
+                    <button onClick={() => setTimePerQuestion(t => Math.min(300, t + 15))}
+                      className="w-9 h-9 rounded-xl bg-white/8 hover:bg-white/14 flex items-center justify-center transition-all active:scale-95">
+                      <Plus className="w-3.5 h-3.5 text-white/60" />
+                    </button>
+                  </div>
+                  {/* Total time display */}
+                  <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-indigo-500/8 border border-indigo-500/20">
+                    <span className="text-xs text-white/40">Total exam duration</span>
+                    <span className="text-sm font-bold text-indigo-300 tabular-nums">
+                      {Math.floor(questionCount * timePerQuestion / 60)}m {(questionCount * timePerQuestion) % 60 > 0 ? `${(questionCount * timePerQuestion) % 60}s` : ""}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Toggles */}
@@ -656,36 +699,56 @@ export function MockExam() {
               </AnimatePresence>
 
               {/* Navigation */}
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => goTo(currentIdx - 1)} disabled={currentIdx === 0}
-                  className="rounded-xl border-white/10 text-white/50 hover:text-white gap-1.5">
-                  <ArrowLeft className="w-4 h-4" />Prev
-                </Button>
-                <div className="flex-1 flex items-center justify-center gap-1.5 overflow-x-auto px-2 py-1">
+              <div className="space-y-2">
+                {/* Question grid */}
+                <div className="flex items-center gap-1.5 overflow-x-auto px-1 py-1">
                   {questions.map((q, i) => {
                     const answered = !!answers[q.id];
                     const isCurrent = i === currentIdx;
                     return (
                       <button key={i} onClick={() => goTo(i)}
                         className={`w-7 h-7 rounded-lg text-xs font-semibold flex-shrink-0 transition-all ${
-                          isCurrent ? "ring-2 ring-indigo-400/60 scale-110" : ""
-                        } ${answered ? "bg-indigo-500/40 text-indigo-200" : "bg-white/6 text-white/35 hover:bg-white/10"}`}>
+                          isCurrent ? "ring-2 ring-indigo-400/70 scale-110 bg-indigo-500/50 text-white" :
+                          answered ? "bg-indigo-500/30 text-indigo-200 hover:bg-indigo-500/45" :
+                          "bg-white/6 text-white/35 hover:bg-white/12"
+                        }`}>
                         {i + 1}
                       </button>
                     );
                   })}
                 </div>
-                {currentIdx < questions.length - 1 ? (
-                  <Button size="sm" onClick={() => goTo(currentIdx + 1)}
-                    className="rounded-xl gap-1.5" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
-                    Next <ArrowRight className="w-4 h-4" />
+                {/* Prev / Auto-scroll / Next row */}
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => goTo(currentIdx - 1)} disabled={currentIdx === 0}
+                    className="rounded-xl border-white/10 text-white/50 hover:text-white gap-1.5">
+                    <ArrowLeft className="w-4 h-4" />Prev
                   </Button>
-                ) : (
-                  <Button size="sm" onClick={handleSubmit}
-                    className="rounded-xl gap-1.5 font-semibold" style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)" }}>
-                    <Square className="w-3.5 h-3.5" />Submit
-                  </Button>
-                )}
+                  {/* ⚡ Auto-scroll toggle */}
+                  <button
+                    onClick={() => setAutoScroll(v => !v)}
+                    title={autoScroll ? "Auto-advance: ON — tap to turn off" : "Auto-advance: OFF — tap to turn on"}
+                    className={`flex items-center gap-1.5 rounded-xl text-xs font-semibold border transition-all px-2.5 py-1.5 ${
+                      autoScroll
+                        ? "bg-amber-500/20 border-amber-500/40 text-amber-300"
+                        : "bg-white/5 border-white/10 text-white/30 hover:text-white/55"
+                    }`}
+                  >
+                    <Zap className="w-3.5 h-3.5" />
+                    {autoScroll && <span>Auto</span>}
+                  </button>
+                  <div className="flex-1" />
+                  {currentIdx < questions.length - 1 ? (
+                    <Button size="sm" onClick={() => goTo(currentIdx + 1)}
+                      className="rounded-xl gap-1.5" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
+                      Next <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  ) : (
+                    <Button size="sm" onClick={handleSubmit}
+                      className="rounded-xl gap-1.5 font-semibold" style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)" }}>
+                      <Square className="w-3.5 h-3.5" />Submit
+                    </Button>
+                  )}
+                </div>
               </div>
             </motion.div>
           )}
