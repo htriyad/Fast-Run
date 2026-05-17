@@ -112,6 +112,7 @@ interface QCardProps {
   examSubmitted?: boolean;
   onExamSelect?: (letter: string) => void;
   cardRef?: (el: HTMLDivElement | null) => void;
+  onImageZoom?: (url: string) => void;
   // multi-select
   selectMode?: boolean;
   selected?: boolean;
@@ -122,7 +123,7 @@ interface QCardProps {
 
 function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorderToPosition,
   mode, practiceSelected, practiceRevealed, onPracticeSelect,
-  examSelected, examSubmitted, onExamSelect, cardRef,
+  examSelected, examSubmitted, onExamSelect, cardRef, onImageZoom,
   selectMode, selected, onToggleSelect, isHighlighted, isLight = false }: QCardProps) {
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
@@ -536,7 +537,13 @@ function QuestionCard({ q, serialNum, totalCount, onUpdated, onDeleted, onReorde
             {q.stemImages && q.stemImages.length > 0 && (
               <div className="mb-3 space-y-2">
                 {q.stemImages.map((url, i) => url && (
-                  <img key={i} src={url} alt="" loading="lazy" className="max-w-full rounded-lg border border-white/15 bg-white p-1" onError={handleStemImageError} />
+                  <img key={i} src={url} alt="" loading="lazy"
+                    draggable={false}
+                    className="max-w-full rounded-lg border border-white/15 bg-white p-1 select-none cursor-zoom-in"
+                    style={{ userSelect: "none" }}
+                    onError={handleStemImageError}
+                    onContextMenu={e => e.preventDefault()}
+                    onClick={() => onImageZoom?.(url)} />
                 ))}
               </div>
             )}
@@ -1322,8 +1329,6 @@ function ExamResults({ questions, examAnswers, onRetry, onBack, negativeMarking 
                           <span className="relative z-[1] font-bold w-4" style={{ color: ltrColor }}>{opt.letter}</span>
                           <span className="relative z-[1] flex-1" style={{ color: txtColor }}><MathText text={opt.text} imageBlock={false} /></span>
                           <span className="relative z-[1] text-[11px] font-bold tabular-nums flex-shrink-0" style={{ color: pctColor }}>{pct}%</span>
-                          {showGreen && <Check className="relative z-[1] w-3.5 h-3.5 flex-shrink-0" style={{ color: isLight ? "#15803d" : "#4ade80" }} />}
-                          {showSky && <span className="relative z-[1] text-[10px] font-semibold flex-shrink-0" style={{ color: isLight ? "#0284c7" : "#38bdf8" }}>ans</span>}
                         </div>
                       );
                     })}
@@ -1475,6 +1480,9 @@ export function QuestionSetView() {
   const [examAutoScroll, setExamAutoScroll] = useState(false);
 
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  // Pending scroll: set inside a setState updater, consumed by useEffect after commit
+  const pendingScrollRef = useRef<{ idx: number; footerH: number } | null>(null);
+  const [zoomedImg, setZoomedImg] = useState<string | null>(null);
 
   // Scroll a card into the visible band between the fixed header and optional footer.
   // Uses window.scrollBy so it works regardless of scroll-container nesting.
@@ -1491,6 +1499,16 @@ export function QuestionSetView() {
     if (Math.abs(delta) < 8) return;
     window.scrollBy({ top: delta, behavior: "smooth" });
   }, []);
+
+  // Execute pending scroll AFTER React commits the state update to DOM
+  useEffect(() => {
+    if (!pendingScrollRef.current) return;
+    const { idx, footerH } = pendingScrollRef.current;
+    pendingScrollRef.current = null;
+    const t = setTimeout(() => smoothScrollToCard(idx, footerH), 40);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [practiceCurrentIdx, examCurrentIdx, smoothScrollToCard]);
 
   const questions = localQuestions ?? data?.questions ?? [];
   const visible = questions.filter(q => !q.hidden);
@@ -1579,13 +1597,14 @@ export function QuestionSetView() {
         setPracticeCurrentIdx(prev => {
           const nextIdx = visible.findIndex((q, i) => i > prev && !practiceAnswers[q.id] && q.id !== questionId);
           const advance = nextIdx !== -1 ? nextIdx : prev + 1 < visible.length ? prev + 1 : prev;
-          smoothScrollToCard(advance, PRACTICE_FOOTER);
+          // Store target; useEffect will run smoothScrollToCard after commit
+          pendingScrollRef.current = { idx: advance, footerH: PRACTICE_FOOTER };
           return advance;
         });
       }, 900);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, practiceAnswers, autoScroll, smoothScrollToCard]);
+  }, [visible, practiceAnswers, autoScroll]);
 
   const handleExamSelect = useCallback((questionId: number, letter: string) => {
     setExamAnswers(prev => ({ ...prev, [questionId]: letter }));
@@ -1594,13 +1613,51 @@ export function QuestionSetView() {
         setExamCurrentIdx(prev => {
           const nextIdx = visible.findIndex((q, i) => i > prev && !examAnswers[q.id] && q.id !== questionId);
           const advance = nextIdx !== -1 ? nextIdx : prev + 1 < visible.length ? prev + 1 : prev;
-          smoothScrollToCard(advance, EXAM_FOOTER);
+          pendingScrollRef.current = { idx: advance, footerH: EXAM_FOOTER };
           return advance;
         });
       }, 700);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, examAnswers, examAutoScroll, smoothScrollToCard]);
+  }, [visible, examAnswers, examAutoScroll]);
+
+  // Keyboard shortcuts: A/B/C/D select MCQ option, ←/→ navigate between questions
+  useEffect(() => {
+    const inPractice = mode === "practice";
+    const inExam = mode === "exam" && examStarted && !examSubmitted;
+    if (!inPractice && !inExam) return;
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement).isContentEditable) return;
+      const key = e.key;
+      const keyLow = key.toLowerCase();
+      const OPTS = ["a", "b", "c", "d", "e"];
+      if (inPractice) {
+        const cq = visible[practiceCurrentIdx];
+        if (OPTS.includes(keyLow) && cq?.type === "mcq" && !practiceAnswers[cq.id]) {
+          handlePracticeSelect(cq.id, keyLow.toUpperCase()); e.preventDefault();
+        } else if (key === "ArrowRight" || key === "ArrowDown") {
+          navigatePractice(practiceCurrentIdx + 1); e.preventDefault();
+        } else if (key === "ArrowLeft" || key === "ArrowUp") {
+          navigatePractice(practiceCurrentIdx - 1); e.preventDefault();
+        }
+      }
+      if (inExam) {
+        const cq = visible[examCurrentIdx];
+        if (OPTS.includes(keyLow) && cq?.type === "mcq") {
+          handleExamSelect(cq.id, keyLow.toUpperCase()); e.preventDefault();
+        } else if (key === "ArrowRight" || key === "ArrowDown") {
+          navigateExam(examCurrentIdx + 1); e.preventDefault();
+        } else if (key === "ArrowLeft" || key === "ArrowUp") {
+          navigateExam(examCurrentIdx - 1); e.preventDefault();
+        }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, examStarted, examSubmitted, visible, practiceCurrentIdx, examCurrentIdx,
+      practiceAnswers, handlePracticeSelect, handleExamSelect, navigatePractice, navigateExam]);
 
   const { remaining: timerRemaining, formatted: timerFormatted, adjustTime: adjustTimerTime } = useExamTimer(
     mode === "exam" && examStarted && !examSubmitted ? selectedDuration : null,
@@ -1899,6 +1956,22 @@ export function QuestionSetView() {
   const answeredCount = isExam ? Object.keys(examAnswers).length : Object.keys(practiceAnswers).length;
 
   return (
+    <>
+    {/* ── Image zoom lightbox ── */}
+    {zoomedImg && (
+      <div className="fixed inset-0 z-[200] bg-black/96 flex items-center justify-center p-4 animate-in fade-in duration-150"
+        onClick={() => setZoomedImg(null)}>
+        <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors z-10"
+          onClick={() => setZoomedImg(null)}>
+          <X className="w-5 h-5 text-white/80" />
+        </button>
+        <img src={zoomedImg} alt="" draggable={false}
+          className="max-w-full max-h-[90vh] object-contain rounded-xl select-none"
+          style={{ userSelect: "none" }}
+          onContextMenu={e => e.preventDefault()}
+          onClick={e => e.stopPropagation()} />
+      </div>
+    )}
     <div className="min-h-[100dvh] flex flex-col">
       {/* ── Sticky header ── */}
       <div className="fixed top-0 left-0 right-0 z-20 bg-background/95 backdrop-blur-md border-b border-white/8">
@@ -1982,6 +2055,7 @@ export function QuestionSetView() {
             examSubmitted={isExam ? examSubmitted : undefined}
             onExamSelect={isExam ? (letter) => handleExamSelect(q.id, letter) : undefined}
             cardRef={(el) => { cardRefs.current[idx] = el; }}
+            onImageZoom={setZoomedImg}
             selectMode={isSolution ? selectMode : undefined}
             selected={isSolution ? selectedIds.has(q.id) : undefined}
             onToggleSelect={isSolution ? () => toggleSelect(q.id) : undefined}
@@ -2158,5 +2232,6 @@ export function QuestionSetView() {
         />
       )}
     </div>
+    </>
   );
 }
