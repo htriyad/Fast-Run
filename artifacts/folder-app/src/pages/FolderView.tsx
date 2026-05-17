@@ -18,7 +18,7 @@ import { MoveFolderDialog } from "@/components/folder/MoveFolderDialog";
 import { DecodeDialog } from "@/components/folder/DecodeDialog";
 import { QuestionSetCard } from "@/components/folder/QuestionSetCard";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Home as HomeIcon, Plus, FolderIcon, GripVertical, Check, Pencil, Trash2, BookOpen, BookMarked, Loader2, X } from "lucide-react";
+import { ChevronRight, Home as HomeIcon, Plus, FolderIcon, GripVertical, Check, Pencil, Trash2, BookOpen, BookMarked, Loader2, X, Settings } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatePresence, motion } from "framer-motion";
@@ -46,11 +46,8 @@ export function FolderView() {
   const [newSetSaving, setNewSetSaving] = useState(false);
   const [, navigate] = useLocation();
 
-  // Folder reorder state
   const [folderReorderMode, setFolderReorderMode] = useState(false);
   const [localFolderOrder, setLocalFolderOrder] = useState<Folder[]>([]);
-
-  // Set reorder state
   const [setReorderMode, setSetReorderMode] = useState(false);
   const [localSetOrder, setLocalSetOrder] = useState<QuestionSet[]>([]);
   const [savingSetsOrder, setSavingSetsOrder] = useState(false);
@@ -65,23 +62,17 @@ export function FolderView() {
     setNewSetSaving(true);
     try {
       const res = await fetch(`${import.meta.env.BASE_URL}api/folders/${folderId}/sets`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, examType: newSetType.trim() || null }),
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, examType: newSetType.trim() || null }),
       });
       if (res.ok) {
         const set = await res.json();
         queryClient.invalidateQueries({ queryKey: getListQuestionSetsQueryKey(folderId) });
-        setNewSetOpen(false);
-        setNewSetName("");
-        setNewSetType("");
-        navigate(`/sets/${set.id}`);
+        setNewSetOpen(false); setNewSetName(""); setNewSetType(""); navigate(`/sets/${set.id}`);
       } else {
-        const err = await res.json().catch(() => ({}));
-        toast({ title: "Failed to create set", description: err?.error ?? `Server error ${res.status}`, variant: "destructive" });
+        toast({ title: "Failed to create set", variant: "destructive" });
       }
     } catch (e) {
-      toast({ title: "Failed to create set", description: "Network error — check connection", variant: "destructive" });
+      toast({ title: "Failed to create set", variant: "destructive" });
     } finally {
       setNewSetSaving(false);
     }
@@ -89,17 +80,11 @@ export function FolderView() {
 
   if (folderLoading || breadcrumbLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-5 py-8 md:px-10 md:py-12 space-y-8">
-        <Skeleton className="h-6 w-56 rounded-full" />
-        <div className="flex items-center gap-4">
-          <Skeleton className="w-16 h-16 rounded-2xl" />
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-4 w-32" />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-36 rounded-2xl" />)}
+      <div className="max-w-[1200px] mx-auto px-6 py-12 space-y-8">
+        <Skeleton className="h-6 w-56" />
+        <Skeleton className="h-32 w-full rounded-2xl" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-40 rounded-2xl" />)}
         </div>
       </div>
     );
@@ -108,8 +93,8 @@ export function FolderView() {
   if (!folder) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <h2 className="text-2xl font-bold text-white/70">Folder not found</h2>
-        <Link href="/"><Button variant="outline">Return Home</Button></Link>
+        <h2 className="text-2xl font-bold text-muted-foreground">Module not found</h2>
+        <Link href="/"><Button>Return Home</Button></Link>
       </div>
     );
   }
@@ -120,285 +105,167 @@ export function FolderView() {
 
   const enterFolderReorder = () => { setLocalFolderOrder([...subfolders]); setFolderReorderMode(true); };
   const moveFolder = (idx: number, dir: "up" | "down") => {
-    const arr = [...localFolderOrder];
-    const swap = dir === "up" ? idx - 1 : idx + 1;
-    if (swap < 0 || swap >= arr.length) return;
-    [arr[idx], arr[swap]] = [arr[swap], arr[idx]];
-    setLocalFolderOrder(arr);
+    const arr = [...localFolderOrder]; const swap = dir === "up" ? idx - 1 : idx + 1;
+    if (swap < 0 || swap >= arr.length) return; [arr[idx], arr[swap]] = [arr[swap], arr[idx]]; setLocalFolderOrder(arr);
   };
   const saveFolderOrder = async () => {
     await reorderFolders.mutateAsync({ data: { items: localFolderOrder.map((f, i) => ({ id: f.id, position: i + 1 })) } });
-    queryClient.invalidateQueries({ queryKey: getListFoldersQueryKey() });
-    setFolderReorderMode(false);
+    queryClient.invalidateQueries({ queryKey: getListFoldersQueryKey() }); setFolderReorderMode(false);
   };
 
   const enterSetReorder = () => { setLocalSetOrder([...questionSets]); setSetReorderMode(true); };
   const moveSet = (idx: number, dir: "up" | "down") => {
-    const arr = [...localSetOrder];
-    const swap = dir === "up" ? idx - 1 : idx + 1;
-    if (swap < 0 || swap >= arr.length) return;
-    [arr[idx], arr[swap]] = [arr[swap], arr[idx]];
-    setLocalSetOrder(arr);
+    const arr = [...localSetOrder]; const swap = dir === "up" ? idx - 1 : idx + 1;
+    if (swap < 0 || swap >= arr.length) return; [arr[idx], arr[swap]] = [arr[swap], arr[idx]]; setLocalSetOrder(arr);
   };
   const saveSetOrder = async () => {
     setSavingSetsOrder(true);
     try {
       await fetch(`${import.meta.env.BASE_URL}api/folders/${folderId}/sets/reorder`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items: localSetOrder.map((s, i) => ({ id: s.id, position: i + 1 })) }),
       });
-      queryClient.invalidateQueries({ queryKey: getListQuestionSetsQueryKey(folderId) });
-      setSetReorderMode(false);
-    } finally {
-      setSavingSetsOrder(false);
-    }
+      queryClient.invalidateQueries({ queryKey: getListQuestionSetsQueryKey(folderId) }); setSetReorderMode(false);
+    } finally { setSavingSetsOrder(false); }
   };
 
   const hasContent = subfolders.length > 0 || questionSets.length > 0;
   const anyReorderMode = folderReorderMode || setReorderMode;
 
   return (
-    <div className="max-w-4xl mx-auto px-5 py-8 md:px-10 md:py-12 space-y-7">
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-sm overflow-x-auto scrollbar-none">
-        <Link href="/">
-          <button className="flex items-center gap-1 text-white/35 hover:text-white/70 transition-colors p-1 rounded-lg hover:bg-white/5">
-            <HomeIcon className="w-3.5 h-3.5" />
-          </button>
-        </Link>
-        {breadcrumbs.map((crumb, idx) => {
-          const isLast = idx === breadcrumbs.length - 1;
-          return (
-            <span key={crumb.id} className="flex items-center gap-1.5">
-              <ChevronRight className="w-3 h-3 text-white/20 flex-shrink-0" />
-              {isLast ? (
-                <span className="font-semibold text-white/90 truncate max-w-[180px]">{crumb.name}</span>
+    <div className="min-h-[100dvh] flex flex-col items-center">
+      <div className="w-full max-w-[1200px] px-6 py-10 space-y-10">
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-2 text-sm font-medium text-muted-foreground bg-card px-4 py-2.5 rounded-xl border border-border w-max shadow-sm">
+          <Link href="/"><button className="hover:text-primary transition-colors"><HomeIcon className="w-4 h-4" /></button></Link>
+          {breadcrumbs.map((crumb, idx) => (
+            <span key={crumb.id} className="flex items-center gap-2">
+              <ChevronRight className="w-4 h-4 opacity-50" />
+              {idx === breadcrumbs.length - 1 ? (
+                <span className="text-foreground font-bold">{crumb.name}</span>
               ) : (
-                <Link href={`/folders/${crumb.id}`}>
-                  <button className="text-white/35 hover:text-white/70 transition-colors truncate max-w-[120px] p-1 rounded-lg hover:bg-white/5">{crumb.name}</button>
-                </Link>
+                <Link href={`/folders/${crumb.id}`}><button className="hover:text-primary transition-colors">{crumb.name}</button></Link>
               )}
             </span>
-          );
-        })}
-      </nav>
+          ))}
+        </nav>
 
-      {/* Header */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-3xl flex items-center justify-center shadow-2xl flex-shrink-0 transition-all duration-500"
-            style={{ background: `linear-gradient(135deg, ${folder.color}30, ${folder.color}15)`, border: `1.5px solid ${folder.color}40`, boxShadow: `0 8px 32px ${folder.color}25` }}>
-            <FolderIconComp className="w-8 h-8" style={{ color: folder.color }} strokeWidth={1.7} />
+        {/* Hero Header */}
+        <header className="relative overflow-hidden rounded-[2rem] border p-8 md:p-12 shadow-2xl flex flex-col md:flex-row md:items-end justify-between gap-8"
+          style={{ borderColor: `${folder.color}30`, backgroundColor: `${folder.color}08` }}>
+          <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ background: `radial-gradient(circle at top right, ${folder.color}, transparent 60%)` }} />
+          
+          <div className="relative z-10 flex items-center gap-6">
+            <div className="w-24 h-24 rounded-3xl flex items-center justify-center shadow-lg bg-background"
+              style={{ border: `2px solid ${folder.color}50`, boxShadow: `0 12px 40px ${folder.color}40` }}>
+              <FolderIconComp className="w-12 h-12" style={{ color: folder.color }} strokeWidth={2} />
+            </div>
+            <div>
+              <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground">{folder.name}</h1>
+              <div className="flex items-center gap-4 mt-4 font-medium text-muted-foreground">
+                <span className="flex items-center gap-1.5"><FolderIcon className="w-4 h-4" /> {folder.childCount} submodules</span>
+                <span className="flex items-center gap-1.5"><BookMarked className="w-4 h-4" /> {questionSets.length} sets</span>
+              </div>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white/95">{folder.name}</h1>
-            <p className="text-white/35 text-sm mt-0.5">
-              {folder.childCount} {folder.childCount === 1 ? "subfolder" : "subfolders"}
-              {questionSets.length > 0 && (
-                <span className="ml-2 text-white/25">· {questionSets.length} question {questionSets.length === 1 ? "set" : "sets"}</span>
-              )}
-            </p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
-          <ThemeToggle size="sm" />
-          {anyReorderMode ? (
-            /* Reorder mode action bar */
-            <>
-              <Button variant="outline" size="sm" onClick={() => { setFolderReorderMode(false); setSetReorderMode(false); }} className="border-white/10 text-white/60 hover:text-white">
-                Cancel
-              </Button>
-              {folderReorderMode && (
-                <Button size="sm" onClick={saveFolderOrder} disabled={reorderFolders.isPending} className="bg-emerald-500 hover:bg-emerald-400 text-white gap-1.5">
-                  <Check className="w-3.5 h-3.5" /> Save Folder Order
+          <div className="relative z-10 flex flex-wrap items-center gap-3">
+            {anyReorderMode ? (
+              <>
+                <Button variant="secondary" onClick={() => { setFolderReorderMode(false); setSetReorderMode(false); }}>Cancel</Button>
+                {folderReorderMode && <Button onClick={saveFolderOrder} disabled={reorderFolders.isPending}><Check className="w-4 h-4 mr-2" /> Save Module Order</Button>}
+                {setReorderMode && <Button onClick={saveSetOrder} disabled={savingSetsOrder}><Check className="w-4 h-4 mr-2" /> Save Set Order</Button>}
+              </>
+            ) : (
+              <>
+                <Button variant="outline" className="w-12 h-12 p-0 rounded-xl" onClick={() => setEditFolder(folder)}><Settings className="w-5 h-5" /></Button>
+                <Button variant="outline" className="h-12 rounded-xl text-primary border-primary/20 hover:bg-primary/10 font-bold" onClick={() => setDecodeOpen(true)}>
+                  <BookOpen className="w-5 h-5 mr-2" /> Decode
                 </Button>
-              )}
-              {setReorderMode && (
-                <Button size="sm" onClick={saveSetOrder} disabled={savingSetsOrder} className="bg-emerald-500 hover:bg-emerald-400 text-white gap-1.5">
-                  <Check className="w-3.5 h-3.5" /> Save Set Order
+                <Button className="h-12 rounded-xl text-white font-bold shadow-lg" style={{ background: folder.color }} onClick={() => setCreateOpen(true)}>
+                  <Plus className="w-5 h-5 mr-2" /> Submodule
                 </Button>
-              )}
-            </>
-          ) : (
-            <>
-              <button onClick={() => setEditFolder(folder)}
-                className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-105 active:scale-95"
-                style={{ backgroundColor: `${folder.color}20`, border: `1px solid ${folder.color}35` }}>
-                <Pencil className="w-4 h-4" style={{ color: folder.color }} />
-              </button>
-              <button onClick={() => setDeleteFolder(folder)}
-                className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-105 active:scale-95 hover:bg-red-500/15 border border-white/8">
-                <Trash2 className="w-4 h-4 text-white/40" />
-              </button>
-              <Button variant="outline" size="sm" onClick={() => setDecodeOpen(true)} className="border-white/10 text-white/50 hover:text-white gap-1.5">
-                <BookOpen className="w-3.5 h-3.5" /> Decode
-              </Button>
-              <Button variant="outline" onClick={() => setNewSetOpen(true)} className="gap-2 rounded-full font-semibold border-white/10 text-white/60 hover:text-white">
-                <BookMarked className="w-4 h-4" /> New Set
-              </Button>
-              <Button onClick={() => setCreateOpen(true)} className="gap-2 rounded-full font-semibold"
-                style={{ background: `linear-gradient(135deg, ${folder.color}, ${folder.color}aa)` }}>
-                <Plus className="w-4 h-4" /> Add Subfolder
-              </Button>
-            </>
+              </>
+            )}
+          </div>
+        </header>
+
+        {/* Content */}
+        <div className="space-y-12">
+          {/* Subfolders */}
+          {(listLoading || displayFolders.length > 0) && (
+            <section className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-black text-foreground">Submodules</h2>
+                {!anyReorderMode && subfolders.length > 1 && (
+                  <Button variant="ghost" size="sm" onClick={enterFolderReorder} className="text-muted-foreground font-bold uppercase tracking-wider text-xs">
+                    <GripVertical className="w-4 h-4 mr-2" /> Reorder
+                  </Button>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <AnimatePresence mode="popLayout">
+                  {displayFolders.map((sub, idx) => (
+                    <FolderCard key={sub.id} folder={sub} index={idx} onEdit={setEditFolder} onDelete={setDeleteFolder} onMove={setMoveFolderTarget}
+                      reorderMode={folderReorderMode} onMoveUp={() => moveFolder(idx, "up")} onMoveDown={() => moveFolder(idx, "down")}
+                      isFirst={idx === 0} isLast={idx === displayFolders.length - 1} />
+                  ))}
+                </AnimatePresence>
+              </div>
+            </section>
+          )}
+
+          {/* Question Sets */}
+          {(setsLoading || displaySets.length > 0) && (
+            <section className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-black text-foreground">Question Sets</h2>
+                <div className="flex items-center gap-3">
+                  {!anyReorderMode && questionSets.length > 1 && (
+                    <Button variant="ghost" size="sm" onClick={enterSetReorder} className="text-muted-foreground font-bold uppercase tracking-wider text-xs">
+                      <GripVertical className="w-4 h-4 mr-2" /> Reorder
+                    </Button>
+                  )}
+                  {!anyReorderMode && (
+                    <Button variant="outline" size="sm" onClick={() => setNewSetOpen(true)} className="font-bold border-primary/30 text-primary">
+                      <Plus className="w-4 h-4 mr-1" /> New Set
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <AnimatePresence mode="popLayout">
+                  {displaySets.map((set, idx) => (
+                    <QuestionSetCard key={set.id} set={set} index={idx} folderColor={folder.color} folderId={folderId}
+                      reorderMode={setReorderMode} onMoveUp={() => moveSet(idx, "up")} onMoveDown={() => moveSet(idx, "down")}
+                      isFirst={idx === 0} isLast={idx === displaySets.length - 1}
+                      onRenamed={(id, name) => setLocalSetOrder(prev => prev.map(s => s.id === id ? { ...s, name } : s))} />
+                  ))}
+                </AnimatePresence>
+              </div>
+            </section>
+          )}
+
+          {!listLoading && !setsLoading && !hasContent && (
+            <div className="py-20 text-center flex flex-col items-center justify-center border-2 border-dashed border-border rounded-2xl bg-card/50">
+              <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ background: `${folder.color}20` }}>
+                <FolderIconComp className="w-10 h-10" style={{ color: folder.color }} strokeWidth={1.5} />
+              </div>
+              <h3 className="text-2xl font-bold text-foreground">Empty Module</h3>
+              <p className="text-muted-foreground mt-2 mb-8 max-w-sm">Populate this module by creating a submodule, a new question set, or decoding raw text into questions.</p>
+              <div className="flex flex-wrap items-center justify-center gap-4">
+                <Button onClick={() => setCreateOpen(true)} className="font-bold h-12 px-6" style={{ background: folder.color, color: "#fff" }}><Plus className="w-5 h-5 mr-2" /> Submodule</Button>
+                <Button variant="outline" onClick={() => setNewSetOpen(true)} className="font-bold h-12 px-6"><BookMarked className="w-5 h-5 mr-2" /> New Set</Button>
+                <Button variant="outline" onClick={() => setDecodeOpen(true)} className="font-bold h-12 px-6 text-primary border-primary/30"><BookOpen className="w-5 h-5 mr-2" /> Decode Text</Button>
+              </div>
+            </div>
           )}
         </div>
-      </header>
+      </div>
 
-      {anyReorderMode && (
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20">
-          <GripVertical className="w-4 h-4 text-amber-400" />
-          <span className="text-sm text-amber-300/80">Use the arrows on each card to set your preferred order</span>
-        </motion.div>
-      )}
-
-      {/* Subfolders */}
-      {listLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {[1, 2, 3].map(i => <div key={i} className="h-36 rounded-2xl bg-white/4 animate-pulse border border-white/5" />)}
-        </div>
-      ) : displayFolders.length > 0 ? (
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-semibold text-white/25 uppercase tracking-widest">Subfolders</p>
-            {!anyReorderMode && subfolders.length > 1 && (
-              <button onClick={enterFolderReorder} className="flex items-center gap-1 text-xs text-white/30 hover:text-white/60 transition-colors">
-                <GripVertical className="w-3.5 h-3.5" /> Reorder
-              </button>
-            )}
-          </div>
-          <AnimatePresence mode="popLayout">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {displayFolders.map((subfolder, idx) => (
-                <FolderCard key={subfolder.id} folder={subfolder} index={idx} onEdit={setEditFolder} onDelete={setDeleteFolder} onMove={setMoveFolderTarget}
-                  reorderMode={folderReorderMode} onMoveUp={() => moveFolder(idx, "up")} onMoveDown={() => moveFolder(idx, "down")}
-                  isFirst={idx === 0} isLast={idx === displayFolders.length - 1} />
-              ))}
-            </div>
-          </AnimatePresence>
-        </div>
-      ) : null}
-
-      {/* Question Sets */}
-      {setsLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {[1, 2].map(i => <div key={i} className="h-16 rounded-2xl bg-white/4 animate-pulse border border-white/5" />)}
-        </div>
-      ) : displaySets.length > 0 ? (
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-semibold text-white/25 uppercase tracking-widest">Question Sets</p>
-            {!anyReorderMode && questionSets.length > 1 && (
-              <button onClick={enterSetReorder} className="flex items-center gap-1 text-xs text-white/30 hover:text-white/60 transition-colors">
-                <GripVertical className="w-3.5 h-3.5" /> Reorder
-              </button>
-            )}
-          </div>
-          <AnimatePresence mode="popLayout">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {displaySets.map((set, idx) => (
-                <QuestionSetCard key={set.id} set={set} index={idx} folderColor={folder.color} folderId={folderId}
-                  reorderMode={setReorderMode} onMoveUp={() => moveSet(idx, "up")} onMoveDown={() => moveSet(idx, "down")}
-                  isFirst={idx === 0} isLast={idx === displaySets.length - 1}
-                  onRenamed={(id, name) => setLocalSetOrder(prev => prev.map(s => s.id === id ? { ...s, name } : s))} />
-              ))}
-            </div>
-          </AnimatePresence>
-        </div>
-      ) : null}
-
-      {/* Empty state */}
-      {!listLoading && !setsLoading && !hasContent && (
-        <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center justify-center py-20 text-center space-y-5 rounded-3xl border border-dashed border-white/8 bg-white/2">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-            style={{ background: `${folder.color}15`, border: `1px solid ${folder.color}25` }}>
-            <FolderIcon className="w-8 h-8" style={{ color: `${folder.color}70` }} strokeWidth={1.5} />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-white/70">This folder is empty</h3>
-            <p className="text-white/30 max-w-xs mt-2 text-sm">Add subfolders or decode Chorcha questions into "{folder.name}".</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={() => setDecodeOpen(true)} className="rounded-full gap-2 border-white/10 text-white/50 hover:text-white">
-              <BookOpen className="w-4 h-4" /> Decode Questions
-            </Button>
-            <Button onClick={() => setCreateOpen(true)} className="rounded-full gap-2"
-              style={{ background: `linear-gradient(135deg, ${folder.color}, ${folder.color}99)` }}>
-              <Plus className="w-4 h-4" /> Create Subfolder
-            </Button>
-          </div>
-        </motion.div>
-      )}
-
-      {/* New Set Dialog */}
-      <AnimatePresence>
-        {newSetOpen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)" }}
-            onClick={(e) => { if (e.target === e.currentTarget) { setNewSetOpen(false); setNewSetName(""); setNewSetType(""); } }}>
-            <motion.div initial={{ scale: 0.95, y: 12 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 12 }}
-              className="w-full max-w-sm rounded-3xl border border-white/10 p-6 space-y-5"
-              style={{ background: "linear-gradient(145deg, #1a1a2e, #16162a)", boxShadow: "0 24px 80px rgba(0,0,0,0.6)" }}>
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-white/90">New Question Set</h2>
-                <button onClick={() => { setNewSetOpen(false); setNewSetName(""); setNewSetType(""); }}
-                  className="w-7 h-7 rounded-lg bg-white/6 hover:bg-white/12 flex items-center justify-center text-white/40 hover:text-white/70 transition-all">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-semibold text-white/40 uppercase tracking-widest mb-1.5">Set Name *</label>
-                  <input
-                    autoFocus
-                    value={newSetName}
-                    onChange={e => setNewSetName(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && createNewSet()}
-                    placeholder="e.g. Dhaka Board 2025"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/25 outline-none focus:border-white/25 focus:bg-white/8 transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-white/40 uppercase tracking-widest mb-1.5">Type <span className="normal-case font-normal text-white/25">(optional)</span></label>
-                  <input
-                    value={newSetType}
-                    onChange={e => setNewSetType(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && createNewSet()}
-                    placeholder="e.g. cq, mcq, sq"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/25 outline-none focus:border-white/25 focus:bg-white/8 transition-all"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-2 pt-1">
-                <Button variant="outline" className="flex-1 border-white/10 text-white/50 hover:text-white rounded-xl"
-                  onClick={() => { setNewSetOpen(false); setNewSetName(""); setNewSetType(""); }}>
-                  Cancel
-                </Button>
-                <Button className="flex-1 gap-2 rounded-xl font-semibold"
-                  style={{ background: `linear-gradient(135deg, ${folder.color}, ${folder.color}aa)` }}
-                  disabled={!newSetName.trim() || newSetSaving}
-                  onClick={createNewSet}>
-                  {newSetSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <BookMarked className="w-4 h-4" />}
-                  Create Set
-                </Button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Modals */}
       <FolderFormDialog open={createOpen} onOpenChange={setCreateOpen} parentId={folder.id} />
       {editFolder && <FolderFormDialog open={true} onOpenChange={(open) => !open && setEditFolder(null)} initialData={editFolder} />}
-      {deleteFolder && (
-        <DeleteFolderDialog open={true} onOpenChange={(open) => !open && setDeleteFolder(null)}
-          folderId={deleteFolder.id} folderName={deleteFolder.name} isViewingSelf={deleteFolder.id === folder.id} />
-      )}
+      {deleteFolder && <DeleteFolderDialog open={true} onOpenChange={(open) => !open && setDeleteFolder(null)} folderId={deleteFolder.id} folderName={deleteFolder.name} isViewingSelf={deleteFolder.id === folder.id} />}
       <DecodeDialog open={decodeOpen} onOpenChange={setDecodeOpen} folderId={folderId} folderColor={folder.color} />
       <MoveFolderDialog folder={moveFolderTarget} onClose={() => setMoveFolderTarget(null)} onMoved={() => queryClient.invalidateQueries()} />
     </div>

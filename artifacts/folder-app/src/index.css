@@ -56,45 +56,40 @@
 }
 
 /* ═══════════════════════════════════════════
-   DARK MODE (default / .dark class)
+   DARK MODE (default / .dark class) — Cosmic Command Center
 ═══════════════════════════════════════════ */
 :root {
   color-scheme: dark;
-  --button-outline: rgba(255,255,255,.10);
-  --badge-outline: rgba(255,255,255,.05);
-  --opaque-button-border-intensity: 9;
-  --elevate-1: rgba(255,255,255,.04);
-  --elevate-2: rgba(255,255,255,.09);
-  --background: 235 18% 5%;
-  --foreground: 0 0% 98%;
-  --border: 237 15% 13%;
-  --card: 237 15% 7%;
-  --card-foreground: 0 0% 98%;
-  --card-border: 237 15% 13%;
-  --sidebar: 237 15% 7%;
-  --sidebar-foreground: 0 0% 98%;
-  --sidebar-border: 237 15% 13%;
-  --sidebar-primary: 252 80% 65%;
-  --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 237 15% 13%;
-  --sidebar-accent-foreground: 0 0% 98%;
-  --sidebar-ring: 237 15% 13%;
-  --popover: 237 15% 7%;
-  --popover-foreground: 0 0% 98%;
-  --popover-border: 237 15% 13%;
-  --primary: 252 80% 65%;
+  --background: 220 20% 4%;
+  --foreground: 210 20% 98%;
+  --border: 220 15% 12%;
+  --card: 220 20% 6%;
+  --card-foreground: 210 20% 98%;
+  --card-border: 220 15% 12%;
+  --sidebar: 220 20% 6%;
+  --sidebar-foreground: 210 20% 98%;
+  --sidebar-border: 220 15% 12%;
+  --sidebar-primary: 250 100% 65%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 220 15% 12%;
+  --sidebar-accent-foreground: 210 20% 98%;
+  --sidebar-ring: 220 15% 12%;
+  --popover: 220 20% 6%;
+  --popover-foreground: 210 20% 98%;
+  --popover-border: 220 15% 12%;
+  --primary: 250 100% 65%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 237 15% 13%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 237 15% 13%;
-  --muted-foreground: 240 5% 65%;
-  --accent: 237 15% 17%;
-  --accent-foreground: 0 0% 98%;
+  --secondary: 220 15% 12%;
+  --secondary-foreground: 210 20% 98%;
+  --muted: 220 15% 12%;
+  --muted-foreground: 220 10% 60%;
+  --accent: 220 15% 16%;
+  --accent-foreground: 210 20% 98%;
   --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 98%;
-  --input: 237 15% 13%;
-  --ring: 237 15% 22%;
-  --chart-1: 252 80% 65%;
+  --destructive-foreground: 210 20% 98%;
+  --input: 220 15% 12%;
+  --ring: 250 100% 65%;
+  --chart-1: 250 100% 65%;
   --chart-2: 320 80% 65%;
   --chart-3: 160 80% 65%;
   --chart-4: 40 80% 65%;
@@ -102,206 +97,97 @@
   --app-font-sans: 'Inter', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: Menlo, monospace;
-  --radius: 1rem;
-  --sidebar-primary-border: hsl(var(--sidebar-primary));
-  --sidebar-accent-border: hsl(var(--sidebar-accent));
-  --primary-border: hsl(var(--primary));
-  --secondary-border: hsl(var(--secondary));
-  --muted-border: hsl(var(--muted));
-  --accent-border: hsl(var(--accent));
-  --destructive-border: hsl(var(--destructive));
+  --radius: 0.75rem;
 }
 
 /* ═══════════════════════════════════════════
-   LIGHT MODE — warm parchment / book theme
+   LIGHT MODE — Premium Slate/Mac-like
 ═══════════════════════════════════════════ */
 html.light {
   color-scheme: light;
-  --background: 36 30% 90%;
-  --foreground: 28 60% 8%;
-  --border: 34 28% 72%;
-  --card: 38 35% 97%;
-  --card-foreground: 28 60% 8%;
-  --card-border: 34 28% 74%;
-  --sidebar: 36 28% 88%;
-  --sidebar-foreground: 28 60% 8%;
-  --sidebar-border: 34 28% 72%;
-  --sidebar-primary: 252 65% 48%;
+  --background: 210 30% 98%;
+  --foreground: 220 40% 10%;
+  --border: 214 20% 88%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 40% 10%;
+  --card-border: 214 20% 88%;
+  --sidebar: 210 30% 96%;
+  --sidebar-foreground: 220 40% 10%;
+  --sidebar-border: 214 20% 88%;
+  --sidebar-primary: 220 90% 50%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 34 28% 82%;
-  --sidebar-accent-foreground: 28 60% 8%;
-  --sidebar-ring: 34 28% 65%;
-  --popover: 38 38% 98%;
-  --popover-foreground: 28 60% 8%;
-  --popover-border: 34 28% 72%;
-  --primary: 252 65% 48%;
+  --sidebar-accent: 214 20% 90%;
+  --sidebar-accent-foreground: 220 40% 10%;
+  --sidebar-ring: 214 20% 80%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 40% 10%;
+  --popover-border: 214 20% 88%;
+  --primary: 220 90% 50%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 34 28% 82%;
-  --secondary-foreground: 28 60% 8%;
-  --muted: 34 28% 82%;
-  --muted-foreground: 28 30% 38%;
-  --accent: 34 28% 78%;
-  --accent-foreground: 28 60% 8%;
-  --destructive: 0 68% 46%;
+  --secondary: 214 20% 92%;
+  --secondary-foreground: 220 40% 10%;
+  --muted: 214 20% 94%;
+  --muted-foreground: 215 15% 45%;
+  --accent: 214 20% 92%;
+  --accent-foreground: 220 40% 10%;
+  --destructive: 0 70% 50%;
   --destructive-foreground: 0 0% 100%;
-  --input: 34 28% 82%;
-  --ring: 34 28% 60%;
-  --chart-1: 252 65% 48%;
+  --input: 214 20% 88%;
+  --ring: 220 90% 50%;
+  --chart-1: 220 90% 50%;
   --chart-2: 320 65% 44%;
   --chart-3: 160 65% 32%;
   --chart-4: 38 75% 38%;
   --chart-5: 200 65% 40%;
 }
 
-/* ── Light mode: warm ink text (replaces cold white/N classes) ── */
-html.light [class*="text-white"] {
-  color: rgba(60, 35, 8, 0.82) !important;
-}
-html.light [class*="text-white\/2"],
-html.light [class*="text-white\/3"] {
-  color: rgba(60, 35, 8, 0.32) !important;
-}
-html.light [class*="text-white\/4"],
-html.light [class*="text-white\/5"] {
-  color: rgba(60, 35, 8, 0.52) !important;
-}
-html.light [class*="text-white\/6"],
-html.light [class*="text-white\/7"] {
-  color: rgba(60, 35, 8, 0.72) !important;
-}
-html.light [class*="text-white\/8"],
-html.light [class*="text-white\/9"],
-html.light .text-white {
-  color: rgba(60, 35, 8, 0.92) !important;
-}
-
-/* ── Light mode: borders → warm tan ── */
-html.light [class*="border-white"] {
-  border-color: rgba(100, 65, 15, 0.14) !important;
-}
-html.light [class*="border-white\/1"],
-html.light [class*="border-white\/2"] {
-  border-color: rgba(100, 65, 15, 0.08) !important;
-}
-html.light [class*="border-white\/5"],
-html.light [class*="border-white\/6"],
-html.light [class*="border-white\/7"],
-html.light [class*="border-white\/8"] {
-  border-color: rgba(100, 65, 15, 0.18) !important;
-}
-
-/* ── Light mode: background tints ── */
-html.light [class*="bg-white\/"] {
-  background-color: rgba(100, 65, 15, 0.04) !important;
-}
-html.light [class*="bg-white\/6"],
-html.light [class*="bg-white\/7"],
-html.light [class*="bg-white\/8"] {
-  background-color: rgba(100, 65, 15, 0.06) !important;
-}
-
-/* ── Light mode: placeholders ── */
-html.light input::placeholder,
-html.light textarea::placeholder {
-  color: rgba(100, 65, 15, 0.40) !important;
-}
-
-/* ── Light mode: fixed header bar ── */
-html.light .bg-background\/95 {
-  background: hsla(34, 32%, 88%, 0.97) !important;
-  border-bottom-color: rgba(120, 80, 20, 0.18) !important;
-  box-shadow: 0 2px 16px rgba(100, 65, 15, 0.08) !important;
-}
-
-/* ── Light mode: scrollbar ── */
-html.light ::-webkit-scrollbar-track { background: hsl(34, 28%, 86%); }
-html.light ::-webkit-scrollbar-thumb { background: rgba(100, 65, 15, 0.22); border-radius: 99px; }
-
-/* ═══════════════════════════════════════════
-   BASE STYLES
-═══════════════════════════════════════════ */
 @layer base {
   * { @apply border-border; }
   body { @apply font-sans antialiased bg-background text-foreground; }
 }
 
-/* ── Dark mode: professional gradient body ── */
+/* ── Dark mode background ── */
 html.dark body, body {
-  background:
-    radial-gradient(ellipse 90% 55% at 50% -5%, rgba(99,102,241,0.10) 0%, transparent 65%),
-    radial-gradient(ellipse 60% 40% at 85% 105%, rgba(139,92,246,0.06) 0%, transparent 60%),
-    hsl(var(--background));
+  background: radial-gradient(circle at 50% 0%, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 1) 100%), hsl(var(--background));
   min-height: 100dvh;
 }
 
-/* ── Light mode: warm wooden desk as background ── */
+/* ── Light mode background ── */
 html.light body {
-  background:
-    radial-gradient(ellipse 100% 50% at 50% -5%, rgba(195, 145, 65, 0.18) 0%, transparent 55%),
-    radial-gradient(ellipse 70% 60% at 90% 110%, rgba(160, 110, 40, 0.10) 0%, transparent 55%),
-    linear-gradient(160deg,
-      hsl(27, 38%, 74%) 0%,
-      hsl(30, 32%, 78%) 35%,
-      hsl(32, 28%, 76%) 65%,
-      hsl(28, 35%, 73%) 100%
-    );
+  background: radial-gradient(circle at 50% 0%, #ffffff, #f1f5f9 100%);
   min-height: 100dvh;
 }
 
 /* ═══════════════════════════════════════════
-   QUESTION CARD — paper / book page
+   QUESTION CARD — Professional Slate
 ═══════════════════════════════════════════ */
 .chorcha-question-card {
-  transition: background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  transition: all 0.2s ease;
+  border-radius: var(--radius-lg);
 }
 
-/* Dark mode: subtle default */
+/* Dark mode */
 html.dark .chorcha-question-card,
 .chorcha-question-card {
-  background: rgba(255,255,255,0.03);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
-/* ── Light mode: FULL BOOK PAGE experience ── */
+/* Light mode */
 html.light .chorcha-question-card {
-  background:
-    /* ── Horizontal ruled lines — like lined paper ── */
-    repeating-linear-gradient(
-      to bottom,
-      transparent 0px,
-      transparent 28px,
-      rgba(155, 110, 40, 0.065) 28px,
-      rgba(155, 110, 40, 0.065) 29px
-    ),
-    /* ── Warm cream page gradient ── */
-    linear-gradient(
-      180deg,
-      #fefcf3 0%,
-      #faf6e8 55%,
-      #f7f2df 100%
-    ) !important;
-
-  border: 1px solid #ccb47e !important;
-  border-left: 4px solid #b08430 !important;    /* golden book spine */
-  border-radius: 2px 14px 14px 2px !important;  /* book page corners */
-
-  box-shadow:
-    0 1px 3px  rgba(110, 70, 12, 0.08),
-    0 4px 14px rgba(110, 70, 12, 0.10),
-    0 18px 48px rgba(110, 70, 12, 0.07),
-    inset 0 1px 0 rgba(255, 255, 255, 0.92),
-    inset 3px 0 8px rgba(110, 70, 12, 0.04) !important;
-
-  color: #1c0e00 !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04), 0 8px 30px rgba(15, 23, 42, 0.02) !important;
+  color: #0f172a !important;
 }
 
-/* ── Book page: question body typography ── */
+/* Light mode overrides for internal elements */
 html.light .chorcha-q-body {
-  font-family: Georgia, 'Times New Roman', serif !important;
-  font-size: 0.9375rem !important;
-  line-height: 1.88 !important;
-  color: #1c0e00 !important;
-  letter-spacing: 0.010em;
-  word-spacing: 0.04em;
+  font-family: var(--app-font-sans) !important;
+  font-size: 0.95rem !important;
+  line-height: 1.6 !important;
+  color: #1e293b !important;
 }
 
 html.light .chorcha-q-body p,
@@ -313,93 +199,42 @@ html.light .chorcha-q-body em {
   font-family: inherit !important;
 }
 
-/* ── All text inside card → warm ink hierarchy ── */
+html.light .chorcha-question-card [class*="text-white"] { color: #334155 !important; }
 html.light .chorcha-question-card [class*="text-white\/2"],
-html.light .chorcha-question-card [class*="text-white\/3"] {
-  color: rgba(80, 50, 10, 0.32) !important;
-}
+html.light .chorcha-question-card [class*="text-white\/3"] { color: #94a3b8 !important; }
 html.light .chorcha-question-card [class*="text-white\/4"],
-html.light .chorcha-question-card [class*="text-white\/5"] {
-  color: rgba(80, 50, 10, 0.52) !important;
-}
+html.light .chorcha-question-card [class*="text-white\/5"] { color: #64748b !important; }
 html.light .chorcha-question-card [class*="text-white\/6"],
-html.light .chorcha-question-card [class*="text-white\/7"] {
-  color: rgba(80, 50, 10, 0.72) !important;
-}
+html.light .chorcha-question-card [class*="text-white\/7"] { color: #475569 !important; }
 html.light .chorcha-question-card [class*="text-white\/8"],
 html.light .chorcha-question-card [class*="text-white\/9"],
-html.light .chorcha-question-card .text-white {
-  color: rgba(40, 22, 2, 0.92) !important;
-}
-html.light .chorcha-question-card [class*="text-white"] {
-  color: rgba(60, 35, 8, 0.82) !important;
-}
+html.light .chorcha-question-card .text-white { color: #0f172a !important; }
 
-/* ── Borders inside card → warm tan ── */
-html.light .chorcha-question-card [class*="border-white"] {
-  border-color: rgba(120, 80, 18, 0.16) !important;
-}
+html.light .chorcha-question-card [class*="border-white"] { border-color: #cbd5e1 !important; }
+html.light .chorcha-question-card [class*="bg-white\/"] { background-color: #f8fafc !important; }
 
-/* ── Backgrounds inside card → warm parchment tint ── */
-html.light .chorcha-question-card [class*="bg-white\/"] {
-  background-color: rgba(120, 80, 18, 0.05) !important;
-}
+html.light .chorcha-question-card .bg-sky-500\/6 { background: #f0f9ff !important; border-color: #e0f2fe !important; }
+html.light .chorcha-question-card .bg-purple-500\/5 { background: #faf5ff !important; border-color: #f3e8ff !important; }
+html.light .chorcha-question-card .bg-amber-500\/5 { background: #fffbeb !important; border-color: #fef3c7 !important; }
 
-/* ── Sub-panels: answer / solution / AI ── */
-html.light .chorcha-question-card .bg-sky-500\/6 {
-  background: rgba(30, 100, 180, 0.06) !important;
-}
-html.light .chorcha-question-card .bg-purple-500\/5 {
-  background: rgba(120, 60, 180, 0.06) !important;
-}
-html.light .chorcha-question-card .bg-amber-500\/5 {
-  background: rgba(180, 100, 20, 0.06) !important;
-}
-html.light .chorcha-question-card .bg-sky-500\/5 {
-  background: rgba(30, 100, 180, 0.05) !important;
-}
-
-/* ── SQ Tap-to-reveal button ── */
-html.light .chorcha-question-card [class*="border-sky-500\/30"][class*="bg-sky-500"] {
-  background: rgba(30, 80, 180, 0.06) !important;
-  border-color: rgba(30, 80, 180, 0.28) !important;
-}
-
-/* ── Input & textarea in card ── */
 html.light .chorcha-question-card input::placeholder,
-html.light .chorcha-question-card textarea::placeholder {
-  color: rgba(100, 65, 15, 0.40) !important;
-}
+html.light .chorcha-question-card textarea::placeholder { color: #94a3b8 !important; }
 
-/* ═══════════════════════════════════════════
-   TABLE STYLES
-═══════════════════════════════════════════ */
+/* TABLE STYLES */
 .chorcha-table table {
   border-collapse: collapse;
   width: 100%;
   font-size: 0.875rem;
-  color: inherit;
 }
 .chorcha-table td, .chorcha-table th {
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 12px;
   text-align: left;
-  vertical-align: top;
 }
-.chorcha-table th {
-  background: rgba(255, 255, 255, 0.06);
-  font-weight: 600;
-}
-.chorcha-table tr:nth-child(even) {
-  background: rgba(255, 255, 255, 0.03);
-}
+.chorcha-table th { background: rgba(255, 255, 255, 0.05); font-weight: 600; }
+.chorcha-table tr:nth-child(even) { background: rgba(255, 255, 255, 0.02); }
+
 html.light .chorcha-table td,
-html.light .chorcha-table th {
-  border-color: rgba(120, 80, 18, 0.16);
-}
-html.light .chorcha-table th {
-  background: rgba(120, 80, 18, 0.06);
-}
-html.light .chorcha-table tr:nth-child(even) {
-  background: rgba(120, 80, 18, 0.03);
-}
+html.light .chorcha-table th { border-color: #e2e8f0; }
+html.light .chorcha-table th { background: #f8fafc; color: #334155; }
+html.light .chorcha-table tr:nth-child(even) { background: #f8fafc; }
