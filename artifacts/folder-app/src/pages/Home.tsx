@@ -13,7 +13,7 @@ import { MoveFolderDialog } from "@/components/folder/MoveFolderDialog";
 import { QuestionIdSearch } from "@/components/QuestionIdSearch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, GripVertical, Check, Hash, Zap } from "lucide-react";
+import { Search, Plus, GripVertical, Check, Hash, Zap, Swords } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AnimatePresence, motion } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
@@ -108,6 +108,12 @@ export function Home() {
               <Button size="sm" className="h-9 px-3 gap-1.5 text-sm bg-orange-500 hover:bg-orange-600 text-white border-none">
                 <Zap className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Exam</span>
+              </Button>
+            </Link>
+            <Link href="/battle">
+              <Button size="sm" className="h-9 px-3 gap-1.5 text-sm bg-rose-600 hover:bg-rose-500 text-white border-none">
+                <Swords className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Battle</span>
               </Button>
             </Link>
           </div>

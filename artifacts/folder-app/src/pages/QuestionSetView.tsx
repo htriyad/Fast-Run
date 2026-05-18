@@ -1476,6 +1476,18 @@ export function QuestionSetView() {
   // Multi-select / copy
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+
+  // Bookmarks (per-question, persisted in localStorage)
+  const [bookmarkIds, setBookmarkIds] = useState<Set<number>>(
+    () => new Set(Object.keys(readBookmarks()).map(Number))
+  );
+  const toggleBookmark = useCallback((q: Question, setName: string) => {
+    const bms = readBookmarks();
+    if (bms[q.id]) { delete bms[q.id]; }
+    else { bms[q.id] = { id: q.id, questionText: q.questionText, setId: Number(setId), setName, type: q.type }; }
+    saveBookmarks(bms);
+    setBookmarkIds(new Set(Object.keys(bms).map(Number)));
+  }, [setId]);
   const [copyDialogOpen, setCopyDialogOpen] = useState(false);
 
   // Stable toggle — never recreated, safe to use with React.memo cards
@@ -2113,6 +2125,8 @@ export function QuestionSetView() {
             onToggleSelect={isSolution ? () => toggleSelect(q.id) : undefined}
             isHighlighted={highlightedId === q.id}
             isLight={isLight}
+            isBookmarked={bookmarkIds.has(q.id)}
+            onBookmark={() => toggleBookmark(q, data?.name ?? "")}
           />
         ))}
         {/* Exam submit */}

@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { Home } from "@/pages/Home";
+import { Battle } from "@/pages/Battle";
 import { FolderView } from "@/pages/FolderView";
 import { QuestionSetView } from "@/pages/QuestionSetView";
 import { MockExam } from "@/pages/MockExam";
@@ -33,6 +34,7 @@ function Router() {
     <Switch>
       {/* Full-page views (own layout) */}
       <Route path="/" component={Home} />
+      <Route path="/battle" component={Battle} />
       <Route path="/mock-exam" component={MockExam} />
       <Route path="/bookmarks" component={Bookmarks} />
       <Route path="/weak-questions" component={WeakQuestions} />
